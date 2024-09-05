@@ -27,20 +27,21 @@ router.get("/cat_codes", async(req, res) => {
 
 // col_store 및 col_store_devices 데이터 수집 처리
 router.post("/add_store_collection", async(req, res) => {
+    console.log('api call add_store_collection');
     // col_store 데이터 수집 처리
     const colStoreData = req.body.colStore;
-    const storeResults = await colStore.addStoreCollection(colStoreData)
-    const storeInsertId = storeResults.insertId
-    const storeInsertCnt = storeResults.affectedRows
+    const storeResults = await colStore.addStoreCollection(colStoreData);
+    const storeInsertId = storeResults.insertId;
+    const storeInsertCnt = storeResults.affectedRows;
 
     // col_store_device 데이터 수집 처리
     const colStoreDevicesData = req.body.colStoreDevices;
     for(device of colStoreDevicesData){
         device['col_store_id'] = storeInsertId;
     }
-    const devicesResult = await colStoreDevice.addStoreDevicesCollection(colStoreDevicesData)
-    const devicesInsertCnt = devicesResult.affectedRows
-    res.json(1 == storeInsertCnt && colStoreDevicesData == devicesInsertCnt);
+    const devicesResult = await colStoreDevice.addStoreDevicesCollection(colStoreDevicesData);
+    const devicesInsertCnt = devicesResult.affectedRows;
+    res.json(1 == storeInsertCnt && colStoreDevicesData.length == devicesInsertCnt);
 })
 
 
