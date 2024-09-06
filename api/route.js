@@ -44,5 +44,10 @@ router.post("/add_store_collection", async(req, res) => {
     res.json(1 == storeInsertCnt && colStoreDevicesData.length == devicesInsertCnt);
 })
 
+router.get("/get_stores", async(req, res) => {
+    const results = await colStore.getStores();    
+    res.json(results)
+})
+
 
 module.exports = router;
