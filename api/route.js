@@ -44,8 +44,15 @@ router.post("/add_store_collection", async(req, res) => {
     res.json(1 == storeInsertCnt && colStoreDevicesData.length == devicesInsertCnt);
 })
 
+// col_store 전체 데이터 get
 router.get("/get_stores", async(req, res) => {
     const results = await colStore.getStores();    
+    res.json(results)
+})
+
+router.get("/get_store_devices/:colStoreId", async(req, res) => {
+    const colStoreId = req.params.colStoreId;
+    const results = await colStoreDevice.getDeviceList(colStoreId);
     res.json(results)
 })
 
