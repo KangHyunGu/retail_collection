@@ -22,7 +22,37 @@ router.get("/cat_codes", async(req, res) => {
     console.log('api call cat_codes')
     const results = await colStoreCatCd.getAllCatCodes();
     // col_store_device insert(단 col_store 부여받은 ID값을 col_store_device 입력할때 col_store_id 컬럼에 넣어줄 것)
-    res.json(results);
+
+    let datas = {};
+    
+    for (const result of results) {
+        // MAIN_CAT_CD가 datas에 없으면 추가
+        if (!datas[result.MAIN_CAT_CD]) {
+            datas[result.MAIN_CAT_CD] = {
+                MAIN_CAT_NM: result.MAIN_CAT_NM,
+                SUB_CODES: [] // 빈 배열로 초기화
+            };
+        }
+        
+        // SUB_CODES 배열에 추가
+        datas[result.MAIN_CAT_CD].SUB_CODES.push({
+            CAT_ID: result.CAT_ID,
+            CAT_NM: result.CAT_NM,
+            CAT_CD: result.CAT_CD
+        });
+    }
+    
+    // 객체 형식을 배열로 변환 (MAIN_CAT_CD를 키로 사용했던 것을 배열로)
+    const finalData = Object.keys(datas).map(key => {
+        return {
+            MAIN_CAT_CD: key,
+            MAIN_CAT_NM: datas[key].MAIN_CAT_NM,
+            SUB_CODES: datas[key].SUB_CODES
+        };
+    });
+
+    console.log('datas : ', finalData)
+    res.json(finalData);
 })
 
 // col_store 및 col_store_devices 데이터 수집 처리
@@ -46,7 +76,7 @@ router.post("/add_store_collection", async(req, res) => {
 
 // col_store 전체 데이터 get
 router.get("/get_stores", async(req, res) => {
-    const results = await colStore.getStores();    
+    const results = await colStore.getStores(); 
     res.json(results)
 })
 
