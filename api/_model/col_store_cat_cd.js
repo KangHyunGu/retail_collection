@@ -17,10 +17,16 @@ const catStoreCatCd = {
         return row;
     },
 
-    async getCatCode(catCd){
-        const sql = `SELECT * FROM ${TABLE.COL_STORE_CAT_CD} WHERE cat_cd = ?`
-        const values = [catCd]
-        const [row] = await db.execute(sql, values)
+    async getCatCode(catId){
+        const sql = `SELECT cat_cd.cat_cd,
+                            cat_cd.cat_nm,
+                            main_cat_cd.main_cat_cd,
+                            main_cat_cd.main_cat_nm
+        FROM ${TABLE.COL_STORE_CAT_CD} cat_cd JOIN ${TABLE.COL_STORE_MAIN_CAT_CD} main_cat_cd
+        ON cat_cd.main_cat_id = main_cat_cd.main_cat_id
+        WHERE cat_cd.cat_id = ?`
+        const values = [catId]
+        const [[row]] = await db.execute(sql, values)
         return row
     }
 }
