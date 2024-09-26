@@ -14,6 +14,12 @@ const colStore = {
         const sql = sqlHelper.SelectSimple(TABLE.COL_STORE, null, [], {REG_DATE: false});
         const [row] = await db.execute(sql.query);
         return row;
+    },
+
+    async removeStore(col_store_id){
+        sql = sqlHelper.DeleteSimple(TABLE.COL_STORE, {col_store_id})
+        const [row] = await db.execute(sql.query, sql.values);
+        return row;
     }
 
 }

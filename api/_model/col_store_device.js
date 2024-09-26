@@ -13,7 +13,14 @@ const colStoreDevice = {
     async getDeviceList(col_store_id){
         const sql = sqlHelper.SelectSimple(TABLE.COL_STORE_DEVICE, {col_store_id});
         const [row] = await db.execute(sql.query, sql.values)
-        return row;
+        return row
+    },
+
+
+    async removeDevices(col_store_id){
+        const sql = sqlHelper.DeleteSimple(TABLE.COL_STORE_DEVICE, {col_store_id});
+        const [row] = await db.execute(sql.query, sql.values)
+        return row
     }
 }
 

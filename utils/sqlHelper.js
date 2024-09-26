@@ -65,6 +65,25 @@ const sqlHelper = {
             }
         }
         return sql;
+    },
+
+    DeleteSimple(table, data){
+        let query = `DELETE FROM ${table}`;
+        const where = []
+        const values = []
+
+        if(data) {
+            const keys = Object.keys(data);
+            for(const key of keys){
+                where.push(`${key}=?`)
+                values.push(data[key]);
+            }
+            query += ` WHERE ` + where.join(' AND ');
+        } else {
+            throw new Error('Where 데이터가 없습니다.');
+        }
+
+        return {query, values};
     }
 
 }

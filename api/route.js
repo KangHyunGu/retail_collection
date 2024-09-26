@@ -99,5 +99,15 @@ router.get("/get_store_devices/:colStoreId", async(req, res) => {
     res.json(results)
 })
 
+router.delete("/remove_store_collection/:colStoreId", async(req, res) => {
+    const {colStoreId} = req.params
+
+    // 1. col_store_device 삭제
+    await colStoreDevice.removeDevices(colStoreId)
+    // 2. col_store 삭제
+    const results = await colStore.removeStore(colStoreId)
+    res.json(1 == results.affectedRows);
+})
+
 
 module.exports = router;
