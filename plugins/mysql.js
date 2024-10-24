@@ -19,4 +19,4 @@ function createDatabase() {
     }
 }
 
-module.exports = createDatabase().getInstance();
+module.exports = createDatabase().getInstance().getConnection();

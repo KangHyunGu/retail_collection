@@ -13,7 +13,8 @@ const catStoreCatCd = {
                                 WHERE MAIN_CAT_ID = CAT_CD.MAIN_CAT_ID
                             ) AS MAIN_CAT_CD 
                             FROM ${TABLE.COL_STORE_CAT_CD} CAT_CD`;
-        const [row] = await db.execute(sql);
+        const connection = await db
+        const [row] = await connection.execute(sql);
         return row;
     },
 
@@ -26,7 +27,8 @@ const catStoreCatCd = {
         ON cat_cd.main_cat_id = main_cat_cd.main_cat_id
         WHERE cat_cd.cat_id = ?`
         const values = [catId]
-        const [[row]] = await db.execute(sql, values)
+        const connection = await db;
+        const [[row]] = await connection.execute(sql, values)
         return row
     }
 }

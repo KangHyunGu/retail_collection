@@ -4,6 +4,7 @@ const router = express.Router();
 const colStoreCatCd = require('./_model/col_store_cat_cd')
 const colStore = require('./_model/col_store');
 const colStoreDevice = require('./_model/col_store_device')
+const colStoreDeviceUwb = require('./_model/col_store_device_uwb')
 
 // router.get('/test', async(req, res) => {
 //     const sql = "SELECT * FROM test";
@@ -54,27 +55,85 @@ router.get("/cat_codes", async(req, res) => {
 })
 
 // col_store 및 col_store_devices 데이터 수집 처리
-router.post("/add_store_collection", async(req, res) => {
-    console.log('api call add_store_collection');
-    // col_store 데이터 수집 처리
-    const colStoreData = req.body.colStore;
-    const storeResults = await colStore.addStoreCollection(colStoreData);
-    const storeInsertId = storeResults.insertId;
-    const storeInsertCnt = storeResults.affectedRows;
-
-    // col_store_device 데이터 수집 처리
-    const colStoreDevicesData = req.body.colStoreDevices;
+router.post("/add_store_collection", async (req, res) => {
+    console.log('API call: add_store_collection');
+    let connection;
+    let storeInsertCnt = 0;
     let devicesInsertCnt = 0;
-    if(colStoreDevicesData.length){
-        for(device of colStoreDevicesData){
-            device['col_store_id'] = storeInsertId;
+    let devicesUwbInsertCnt = 0;
+    let col_store_device_uwb = [];
+    let colStoreDevicesData = [];
+
+    try {
+        // 풀에서 연결을 가져옴
+        connection = await db
+
+        // 트랜잭션 시작
+        await connection.beginTransaction();
+
+        // col_store 데이터 수집 처리
+        const colStoreData = req.body.colStore;
+        const storeResults = await colStore.addStoreCollection(colStoreData);
+        const storeInsertId = storeResults.insertId;
+        storeInsertCnt = storeResults.affectedRows;
+
+        // col_store_device 데이터 수집 처리
+        colStoreDevicesData = req.body.colStoreDevices;
+
+        if (colStoreDevicesData.length) {
+            for (let device of colStoreDevicesData) {
+                device['col_store_id'] = storeInsertId;
+            }
+
+            const existUwbData = colStoreDevicesData.filter((item) => item.col_store_device_uwb != null);
+
+            if (existUwbData.length) {
+                for (const device of existUwbData) {
+                    col_store_device_uwb.push(device.col_store_device_uwb);
+                    delete device.col_store_device_uwb;
+                }
+            }
+
+            // 일부러 예외 발생 (테스트용)
+            //throw new Error('Intentional error to trigger rollback');
+
+            const devicesResult = await colStoreDevice.addStoreDevicesCollection(colStoreDevicesData);
+            devicesInsertCnt = devicesResult.affectedRows;
+
+            if (devicesInsertCnt > 0 && col_store_device_uwb.length) {
+                // UWB Distance 정보 insert 처리
+                devicesUwbInsertCnt += await colStoreDeviceUwb.addStoreDevicesUwbInfo(storeInsertId, col_store_device_uwb);
+            }
         }
-        const devicesResult = await colStoreDevice.addStoreDevicesCollection(colStoreDevicesData);
-        devicesInsertCnt = devicesResult.affectedRows;
+
+        // 트랜잭션 커밋
+        await connection.commit();
+        console.log('Transaction committed successfully');
+
+        // 응답 반환
+        return res.json(
+            storeInsertCnt === 1 &&
+            colStoreDevicesData.length === devicesInsertCnt &&
+            col_store_device_uwb.length === devicesUwbInsertCnt
+        );
+
+    } catch (err) {
+        if (connection) {
+            // 오류가 발생하면 롤백
+            await connection.rollback();
+            console.error('Transaction rolled back due to error:', err);
+        }
+
+        // 오류 응답 반환
+        return res.status(500).json({ error: 'Transaction failed', details: err.message });
+
+    } finally {
+        if (connection) {
+            // 연결 반환
+            await connection.release();
+        }
     }
-   
-    res.json(1 == storeInsertCnt && colStoreDevicesData.length == devicesInsertCnt);
-})
+});
 
 // col_store 전체 데이터 get
 router.get("/get_stores", async(req, res) => {
