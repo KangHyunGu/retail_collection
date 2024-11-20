@@ -21,8 +21,8 @@ const cors = require('cors');
     app.use(cors());
 
     // router
-    const route = require('./api/route');
-    app.use('/api', route);
+    app.use('/api', require('./api/route'));
+    app.use('/api/vc/', require('./api/vc_route'))
 
     webServer.listen(port, () => {
         console.log(`${port} 서버시작`);
