@@ -6,6 +6,9 @@ const catStoreCatCd = require('./col_store_cat_cd')
 const colStore = {
 
     async addStoreCollection(colStoreData) {
+        if(colStoreData.col_store_loc_post_cd == ""){
+            colStoreData.col_store_loc_post_cd = 0;
+        }
         const sql = sqlHelper.Insert(TABLE.COL_STORE, colStoreData);
         const connection = await db
         const [row] = await connection.execute(sql.query, sql.values);
@@ -35,8 +38,8 @@ const colStore = {
     },
 
     async getNearByStores(latitude, longitude){
-        // 위도, 경도 값으로 반경 15M내 해당되는 매장 검색
-        const searchRedius = 15;
+        // 위도, 경도 값으로 반경 30M내 해당되는 매장 검색
+        const searchRedius = 30;
         const sql = `SELECT *,
                         ST_Distance_Sphere(location, ST_SRID(Point(?,?), 4326)) as distance
                  FROM ${TABLE.COL_STORE}
