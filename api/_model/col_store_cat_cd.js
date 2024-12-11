@@ -30,6 +30,18 @@ const catStoreCatCd = {
         const connection = await db;
         const [[row]] = await connection.execute(sql, values)
         return row
+    },
+
+    async attachCategoryData(stores){
+        for(const store of stores){
+            const catId = store.cat_id
+            const catCode = await this.getCatCode(catId)
+            store.main_cat_cd = catCode.main_cat_cd
+                store.main_cat_nm = catCode.main_cat_nm
+                store.cat_cd = catCode.cat_cd
+                store.cat_nm = catCode.cat_nm
+        }
+        return stores
     }
 }
 

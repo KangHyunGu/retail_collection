@@ -16,6 +16,10 @@ const colStoreDeviceUWb = {
         }
 
         return addCnt
+    },
+
+    async getCollectionDevice(deviceMacInfos){
+        
     }
 }
 

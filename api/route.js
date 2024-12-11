@@ -4,7 +4,9 @@ const router = express.Router();
 const colStoreCatCd = require('./_model/col_store_cat_cd')
 const colStore = require('./_model/col_store');
 const colStoreDevice = require('./_model/col_store_device')
-const colStoreDeviceUwb = require('./_model/col_store_device_uwb')
+const colStoreDeviceUwb = require('./_model/col_store_device_uwb');
+const monent = require('../utils/moment');
+const TABLE = require('../utils/TABLE');
 
 // router.get('/test', async(req, res) => {
 //     const sql = "SELECT * FROM test";
@@ -54,6 +56,77 @@ router.get("/cat_codes", async(req, res) => {
     res.json(finalData);
 })
 
+router.post("/add_data_collection", async (req, res) => {
+    let connection;
+
+    try {
+        const colStoreData = req.body.colStore;
+        const colDeviceData = req.body.colStoreDevices;
+
+        // 1. 기존에 등록 된 디바이스들이 존재하는지 확인
+        const deviceMacInfos = []
+        for(const device of colDeviceData){
+            deviceMacInfos.push(device.col_store_device_mac_addr);
+        }
+       const targetDeviceData = await colStoreDevice.processDeviceData(colDeviceData)
+
+       let target_store_id = await colStoreDevice.getDeviceFindStoreId(colDeviceData)
+       const insertData = targetDeviceData.insertData
+       const updateData = targetDeviceData.updateData
+      
+       connection = await db;
+       // 트랜잭션 시작
+       await connection.beginTransaction();
+        
+       // col_store가 데이터가 없을 경우 INSERT 처리
+       colStoreData['location'] = `ST_SRID(Point(${colStoreData.col_store_loc_lot},${colStoreData.col_store_loc_lat}), 4326)`
+       if(target_store_id == 0){
+        const storeResults = await colStore.addStoreCollection(colStoreData);
+        target_store_id = storeResults.insertId;
+       } else {
+        colStoreData["CHG_ID"] = 1;
+        colStoreData["CHG_DATE"] = monent().format("LT");
+        delete colStoreData.REG_ID;
+        delete colStoreData.REG_DATE;
+       }
+
+
+       if(insertData.length){
+        for(const device of insertData){
+            device['col_store_id'] = target_store_id;
+            delete device['col_store_device_uwb']
+        }
+         const devicesResult = await colStoreDevice.addStoreDevicesCollection(insertData);
+       }
+
+       if(updateData.length){
+        for(const device of updateData){
+            device['col_store_id'] = target_store_id;
+            delete device['col_store_device_uwb']
+        }
+        //TODO: 업데이트 처리
+        const devicesResult = await colStoreDevice.updateStoreDeviceCollection(updateData);
+        console.log('devicesResult : ', devicesResult);
+       }
+
+       // 트랜잭션 커밋
+       await connection.commit();
+    } catch(err){
+        if (connection) {
+            // 오류가 발생하면 롤백
+            await connection.rollback();
+            console.log(err);
+            console.error('Transaction rolled back due to error:', err.message);
+        }
+
+        // 오류 응답 반환
+        console.error(err.message);
+        return res.status(500).json({ error: 'Transaction failed', details: err.message });
+    }
+
+    return res.json(true);
+})
+
 // col_store 및 col_store_devices 데이터 수집 처리
 router.post("/add_store_collection", async (req, res) => {
     console.log('API call: add_store_collection');
@@ -73,6 +146,7 @@ router.post("/add_store_collection", async (req, res) => {
 
         // col_store 데이터 수집 처리
         const colStoreData = req.body.colStore;
+        colStoreData['location'] = `ST_SRID(Point(${colStoreData.col_store_loc_lot},${colStoreData.col_store_loc_lat}), 4326)`;
         const storeResults = await colStore.addStoreCollection(colStoreData);
         const storeInsertId = storeResults.insertId;
         storeInsertCnt = storeResults.affectedRows;
@@ -137,18 +211,7 @@ router.post("/add_store_collection", async (req, res) => {
 
 // col_store 전체 데이터 get
 router.get("/get_stores", async(req, res) => {
-    const results = await colStore.getStores(); 
-   
-
-    for(const store of results){
-        const catId = store.cat_id
-        const catCode = await colStoreCatCd.getCatCode(catId)
-        store.main_cat_cd = catCode.main_cat_cd
-            store.main_cat_nm = catCode.main_cat_nm
-            store.cat_cd = catCode.cat_cd
-            store.cat_nm = catCode.cat_nm
-    }
-   
+    let results = await colStore.getStores(); 
     res.json(results)
 })
 
@@ -158,15 +221,21 @@ router.get("/get_store_devices/:colStoreId", async(req, res) => {
     res.json(results)
 })
 
-router.delete("/remove_store_collection/:colStoreId", async(req, res) => {
-    const {colStoreId} = req.params
-
+router.delete("/remove_store_collection/:colStoreId/:isParent", async(req, res) => {
+    const {colStoreId, isParent} = req.params
     // 1. col_store_device 삭제
-    await colStoreDevice.removeDevices(colStoreId)
+    await colStoreDevice.removeDevices(colStoreId, isParent)
     // 2. col_store 삭제
-    const results = await colStore.removeStore(colStoreId)
-    res.json(1 == results.affectedRows);
+    await colStore.removeStore(colStoreId, isParent)
+    res.json(true);
 })
+
+router.get("/get_near_by_store/:latitude/:longitude", async(req, res) => {
+    const latitude = req.params.latitude
+    const longitude = req.params.longitude
+    const results = await colStore.getNearByStores(latitude, longitude)
+    res.json(results);
+  })
 
 
 module.exports = router;
