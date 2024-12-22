@@ -19,6 +19,7 @@ router.get('/spread', async(req, res) => {
     const store = req.query.store || "";
     const sql = `SELECT 
                     cs.col_store_nm,
+                    csd.col_store_device_mac_addr,
                     csd.col_store_device_nm,
                     csd.col_store_device_rssi,
                     csd.col_store_device_type

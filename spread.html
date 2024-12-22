@@ -91,7 +91,9 @@
         <div class="controls">
             <select id="storeSelect">
                 <option value="원체크2">원체크2</option>
-                <option value="8088">8088</option>
+                <option value="본가왕뼈">본가왕뼈</option>
+                <option value="GS25 안양 skv1 2차">GS25 안양 skv1 2차</option>
+                <option value="뮤피">뮤피</option>
             </select>
             <select id="deviceTypeSelect">
                 <option value="BLE">BLE</option>
@@ -133,11 +135,12 @@
         function groupDataByStoreAndDevice(data) {
             const groupedData = {};
             data.forEach(item => {
-                const key = `${item.col_store_nm}_${item.col_store_device_nm}`;
+                const key = `${item.col_store_nm}_${item.col_store_device_nm}_${item.col_store_device_mac_addr}`;
                 if (!groupedData[key]) {
                     groupedData[key] = {
                         store: item.col_store_nm,
                         device: item.col_store_device_nm,
+                        macAddr: item.col_store_device_mac_addr,
                         type: item.col_store_device_type,
                         rssi: [],
                     };
@@ -164,7 +167,7 @@
             const datasets = filteredData
                 .filter(device => selectedDevices.includes(device.device))
                 .map((item, index) => ({
-                    label: item.device,
+                    label: `${item.device} (${item.macAddr})`,
                     data: item.rssi.map((value, timeIndex) => ({ x: timeIndex + 1, y: value })),
                     borderColor: `hsl(${index * 20}, 70%, 50%)`,
                     backgroundColor: `hsl(${index * 20}, 70%, 50%, 0.3)`,
@@ -197,10 +200,8 @@
                     },
                 },
             });
-
             populateTable(storeData, deviceType);
         }
-
         function createDeviceCheckboxes(storeData, deviceType) {
             const $deviceCheckboxes = $("#deviceCheckboxes");
             $deviceCheckboxes.empty();
@@ -210,6 +211,7 @@
 
             filteredData.forEach(device => {
                 const $checkbox = $(`<input type="checkbox" id="${device.device}" value="${device.device}" checked>`);
+
                 $checkbox.on("change", function () {
                     if (this.checked) {
                         selectedDevices.push(device.device);
@@ -219,7 +221,7 @@
                     updateChart($("#storeSelect").val(), $("#deviceTypeSelect").val());
                 });
 
-                const $label = $(`<label for="${device.device}">${device.device}</label>`);
+                const $label = $(`<label for="${device.device}">${device.device} (${device.macAddr})</label>`);
 
                 const $container = $("<div></div>").append($checkbox, $label);
                 $deviceCheckboxes.append($container);
@@ -231,22 +233,109 @@
             const $tableHead = $("#dataTable thead tr");
             const $tableBody = $("#dataTable tbody");
 
-            $tableHead.html("<th>Device</th>");
-            $tableBody.empty();
+            // 가장 긴 데이터 배열 길이 계산
+            const maxTimeIndex = Math.max(...filteredData.map(device => device.rssi.length));
 
-            const timeIndexes = Array.from({ length: filteredData[0]?.rssi.length || 0 }, (_, i) => i + 1);
-            timeIndexes.forEach(index => {
-                $tableHead.append(`<th>${index}</th>`);
+            // 테이블 헤더 생성
+            $tableHead.html("<th>Device</th>");
+            for (let i = 1; i <= maxTimeIndex; i++) {
+                $tableHead.append(`<th>${i}</th>`);
+            }
+            $tableHead.append("<th>최소 값</th>");
+            $tableHead.append("<th>최대 값</th>");
+            $tableHead.append("<th>최소 이동 변화량</th>");
+            $tableHead.append("<th>평균 이동 변화량</th>");
+            $tableHead.append("<th>최대 이동 변화량</th>");
+            $tableHead.append("<th>평균 RSSI</th>");
+            $tableHead.append("<th>RANK</th>");
+
+            // 평균 RSSI 계산 및 그룹화
+            const groupedData = {};
+            filteredData.forEach(device => {
+                const key = `${device.device}_${device.macAddr}`;
+                if (!groupedData[key]) {
+                    groupedData[key] = {
+                        device: device.device,
+                        macAddr: device.macAddr,
+                        rssi: [],
+                    };
+                }
+                groupedData[key].rssi = groupedData[key].rssi.concat(device.rssi.filter(rssi => rssi !== undefined && rssi !== ""));
             });
 
-            filteredData.forEach(device => {
-                if (selectedDevices.includes(device.device)) {
-                    const $row = $(`<tr><td>${device.device}</td></tr>`);
-                    device.rssi.forEach(rssi => {
-                        $row.append(`<td>${rssi}</td>`);
-                    });
-                    $tableBody.append($row);
+            const deviceData = Object.values(groupedData).map(device => {
+                const avgRSSI = device.rssi.length
+                    ? (device.rssi.reduce((sum, value) => sum + value, 0) / device.rssi.length).toFixed(2)
+                    : "없음";
+                return { ...device, avgRSSI: avgRSSI === "없음" ? null : parseFloat(avgRSSI) };
+            });
+
+            // RANK 계산 (평균 RSSI 내림차순, 동순위 처리)
+            deviceData.sort((a, b) => b.avgRSSI - a.avgRSSI);
+            let rank = 1;
+            deviceData.forEach((device, index) => {
+                if (index > 0 && device.avgRSSI !== deviceData[index - 1].avgRSSI) {
+                    rank = index + 1;
                 }
+                device.rank = rank;
+            });
+
+            // RANK 기준 정렬
+            deviceData.sort((a, b) => a.rank - b.rank);
+
+            // 테이블 데이터 추가
+            $tableBody.empty();
+            deviceData.forEach(device => {
+                const key = `${device.device}_${device.macAddr}`;
+                const groupedDevice = groupedData[key];
+
+                const $row = $(`<tr><td>${device.device} (${device.macAddr})</td></tr>`);
+                let rssiValues = groupedDevice.rssi;
+
+                // RSSI 데이터 추가
+                for (let i = 0; i < maxTimeIndex; i++) {
+                    const value = rssiValues[i] !== undefined ? rssiValues[i] : "";
+                    $row.append(`<td>${value}</td>`);
+                }
+
+                // 최소 값 및 최대 값 계산
+                const minValue = rssiValues.length ? Math.min(...rssiValues) : "없음";
+                const maxValue = rssiValues.length ? Math.max(...rssiValues) : "없음";
+
+                // 이동 변화량 계산
+                let changes = [];
+                for (let i = 1; i < rssiValues.length; i++) {
+                    const change = Math.abs(rssiValues[i] - rssiValues[i - 1]);
+                    if (change >= 1) {
+                        changes.push(change); // 1 이상만 포함
+                    }
+                }
+
+                const minChange = changes.length ? Math.min(...changes) : "없음";
+                const avgChange = changes.length ? (changes.reduce((a, b) => a + b, 0) / changes.length).toFixed(2) : "없음";
+                const maxChange = changes.length ? Math.max(...changes) : "없음";
+
+                // 최소 값, 최대 값 추가
+                $row.append(`<td>${minValue}</td>`);
+                $row.append(`<td>${maxValue}</td>`);
+
+                // 이동 변화량 및 기타 값 추가
+                $row.append(`<td>${minChange}</td>`);
+                $row.append(`<td>${avgChange}</td>`);
+                $row.append(`<td>${maxChange}</td>`);
+                $row.append(`<td>${device.avgRSSI}</td>`);
+                $row.append(`<td>${device.rank}</td>`);
+
+                // RANK에 따른 색상 지정
+                if (device.rank === 1 || device.rank === 2) {
+                    $row.css("background-color", "lightgreen");
+                } else if (device.rank === 3 || device.rank === 4) {
+                    $row.css("background-color", "orange");
+                } else if (device.rank === 5) {
+                    $row.css("background-color", "lightblue");
+                }
+
+                $tableBody.append($row);
             });
         }
 
