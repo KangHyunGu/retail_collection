@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSSI Line Chart with Tabs (jQuery)</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            margin: 20px;
+            gap: 20px;
+        }
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #f4f4f4;
+        }
+        .tab.active {
+            background-color: #ddd;
+            font-weight: bold;
+        }
+        .content-container {
+            display: none;
+            width: 100%;
+        }
+        .content-container.active {
+            display: block;
+        }
+        .chart-container, .controls-container {
+            margin: 0 auto;
+            width: 80%;
+        }
+        .controls {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+        .checkbox-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        canvas {
+            max-width: 100%;
+            margin: 20px 0;
+            max-height: 550px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="tabs">
+            <div class="tab active" data-target="#chartContainer">분포도</div>
+            <div class="tab" data-target="#tableContainer">테이블</div>
+        </div>
+
+        <div class="controls">
+            <select id="storeSelect">
+                <option value="원체크2">원체크2</option>
+                <option value="8088">8088</option>
+            </select>
+            <select id="deviceTypeSelect">
+                <option value="BLE">BLE</option>
+                <option value="WIFI">WIFI</option>
+            </select>
+        </div>
+
+        <div class="checkbox-section">
+            <div>
+                <input type="checkbox" id="selectAll" />
+                <label for="selectAll">전체 선택</label>
+            </div>
+            <div id="deviceCheckboxes" class="checkbox-grid"></div>
+        </div>
+
+        <div id="chartContainer" class="content-container active">
+            <canvas id="lineChart"></canvas>
+        </div>
+
+        <div id="tableContainer" class="content-container">
+            <h3>Selected Device Data</h3>
+            <table id="dataTable">
+                <thead>
+                    <tr>
+                        <th>Device</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const allData = {};
+        let lineChart;
+        let selectedDevices = [];
+
+        function groupDataByStoreAndDevice(data) {
+            const groupedData = {};
+            data.forEach(item => {
+                const key = `${item.col_store_nm}_${item.col_store_device_nm}`;
+                if (!groupedData[key]) {
+                    groupedData[key] = {
+                        store: item.col_store_nm,
+                        device: item.col_store_device_nm,
+                        type: item.col_store_device_type,
+                        rssi: [],
+                    };
+                }
+                groupedData[key].rssi.push(item.col_store_device_rssi);
+            });
+            return Object.values(groupedData);
+        }
+
+        function fetchData(store) {
+            console.log('store : ', store);
+            $.getJSON(`http://localhost:3000/api/spread?store=${store}`, (responseData) => {
+                const groupedData = groupDataByStoreAndDevice(responseData);
+                allData[store] = groupedData; // 특정 매장 데이터만 저장
+                initialize();
+            }).fail((error) => {
+                console.error("Error fetching data:", error);
+            });
+        }
+
+        function updateChart(store, deviceType) {
+            const storeData = allData[store] || [];
+            const filteredData = storeData.filter(device => device.type === deviceType);
+
+            const datasets = filteredData
+                .filter(device => selectedDevices.includes(device.device))
+                .map((item, index) => ({
+                    label: item.device,
+                    data: item.rssi.map((value, timeIndex) => ({ x: timeIndex + 1, y: value })),
+                    borderColor: `hsl(${index * 20}, 70%, 50%)`,
+                    backgroundColor: `hsl(${index * 20}, 70%, 50%, 0.3)`,
+                    tension: 0.4,
+                    fill: false,
+                }));
+
+            if (lineChart) lineChart.destroy();
+
+            lineChart = new Chart($("#lineChart"), {
+                type: "line",
+                data: { datasets },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: "left" },
+                        title: { display: true, text: `RSSI Line Chart for ${store} (${deviceType})` },
+                    },
+                    scales: {
+                        x: {
+                            type: "linear",
+                            title: { display: true, text: "Time Index" },
+                            ticks: { stepSize: 1 },
+                        },
+                        y: {
+                            title: { display: true, text: "RSSI Value" },
+                            suggestedMin: -70,
+                            suggestedMax: -40,
+                        },
+                    },
+                },
+            });
+
+            populateTable(storeData, deviceType);
+        }
+
+        function createDeviceCheckboxes(storeData, deviceType) {
+            const $deviceCheckboxes = $("#deviceCheckboxes");
+            $deviceCheckboxes.empty();
+
+            const filteredData = storeData.filter(device => device.type === deviceType);
+            selectedDevices = filteredData.map(device => device.device);
+
+            filteredData.forEach(device => {
+                const $checkbox = $(`<input type="checkbox" id="${device.device}" value="${device.device}" checked>`);
+                $checkbox.on("change", function () {
+                    if (this.checked) {
+                        selectedDevices.push(device.device);
+                    } else {
+                        selectedDevices = selectedDevices.filter(d => d !== device.device);
+                    }
+                    updateChart($("#storeSelect").val(), $("#deviceTypeSelect").val());
+                });
+
+                const $label = $(`<label for="${device.device}">${device.device}</label>`);
+
+                const $container = $("<div></div>").append($checkbox, $label);
+                $deviceCheckboxes.append($container);
+            });
+        }
+
+        function populateTable(storeData, deviceType) {
+            const filteredData = storeData.filter(device => device.type === deviceType);
+            const $tableHead = $("#dataTable thead tr");
+            const $tableBody = $("#dataTable tbody");
+
+            $tableHead.html("<th>Device</th>");
+            $tableBody.empty();
+
+            const timeIndexes = Array.from({ length: filteredData[0]?.rssi.length || 0 }, (_, i) => i + 1);
+            timeIndexes.forEach(index => {
+                $tableHead.append(`<th>${index}</th>`);
+            });
+
+            filteredData.forEach(device => {
+                if (selectedDevices.includes(device.device)) {
+                    const $row = $(`<tr><td>${device.device}</td></tr>`);
+                    device.rssi.forEach(rssi => {
+                        $row.append(`<td>${rssi}</td>`);
+                    });
+                    $tableBody.append($row);
+                }
+            });
+        }
+
+        function initialize() {
+            const selectedStore = $("#storeSelect").val();
+            const selectedDeviceType = $("#deviceTypeSelect").val();
+            const storeData = allData[selectedStore] || [];
+            createDeviceCheckboxes(storeData, selectedDeviceType);
+            updateChart(selectedStore, selectedDeviceType);
+        }
+
+        $(document).ready(function () {
+            $(".tabs .tab").on("click", function () {
+                const target = $(this).data("target");
+                $(".tabs .tab").removeClass("active");
+                $(this).addClass("active");
+                $(".content-container").removeClass("active");
+                $(target).addClass("active");
+            });
+
+            $("#storeSelect").on("change", function () {
+                const selectedStore = $(this).val();
+                fetchData(selectedStore); // 매장 변경 시 데이터 로드
+            });
+
+            $("#deviceTypeSelect").on("change", initialize);
+
+            $("#selectAll").on("change", function () {
+                const isChecked = this.checked;
+                $("#deviceCheckboxes input[type=checkbox]").prop("checked", isChecked);
+                selectedDevices = isChecked ? $("#deviceCheckboxes input[type=checkbox]").map(function () { return this.value; }).get() : [];
+                updateChart($("#storeSelect").val(), $("#deviceTypeSelect").val());
+            });
+
+            fetchData($("#storeSelect").val()); // 초기 데이터 로드
+        });
+    </script>
+</body>
+</html>

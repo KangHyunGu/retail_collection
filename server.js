@@ -20,6 +20,10 @@ const cors = require('cors');
     // CORS 정책 허용
     app.use(cors());
 
+
+    // rssi2.html 파일 경로 설정
+    const htmlFilePath = path.join(__dirname, 'spread.html');
+
     // router
     app.use('/api', require('./api/route'));
     app.use('/api/vc/', require('./api/vc_route'))
@@ -29,7 +33,7 @@ const cors = require('cors');
     })
 
     app.get('/', async (req, res) => {
-        res.json("Hello World!")
+        res.sendFile(htmlFilePath);
     })
 
 })();

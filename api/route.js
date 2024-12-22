@@ -10,9 +10,26 @@ const TABLE = require('../utils/TABLE');
 
 // router.get('/test', async(req, res) => {
 //     const sql = "SELECT * FROM test";
+    
 //     const [row] = await db.execute(sql);
 //     res.json(row);
 // })
+
+router.get('/spread', async(req, res) => {
+    const store = req.query.store || "";
+    const sql = `SELECT 
+                    cs.col_store_nm,
+                    csd.col_store_device_nm,
+                    csd.col_store_device_rssi,
+                    csd.col_store_device_type
+                FROM col_store cs join col_store_device csd
+                ON cs.col_store_id = csd.col_store_id
+                WHERE cs.col_store_nm = ?
+                ORDER BY csd.col_store_device_type, csd.col_store_device_nm, cs.col_store_id asc`;
+    const connection = await db;            
+    const [row] = await connection.execute(sql, [store]);
+    res.json(row);
+})
 
 // router.post('/test2', async(req, res) => {
 //     const sql = "SELECT * FROM test"
