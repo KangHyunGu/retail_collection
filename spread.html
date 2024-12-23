@@ -168,26 +168,36 @@
             $.getJSON(`/api/spread?store=${store}`, (responseData) => {
                 const groupedData = groupDataByStoreAndDevice(responseData);
                 allData[store] = groupedData; // 특정 매장 데이터만 저장
+
                 initialize();
+
+                // 모든 디바이스 선택 처리
+                const storeData = allData[store] || [];
+                const selectedDeviceType = $("#deviceTypeSelect").val();
+                const filteredData = storeData.filter(device => device.type === selectedDeviceType);
+                selectedDevices = filteredData.map(device => device.device);
+
+                // 체크박스와 전체 선택 상태 동기화
+                updateSelectAllCheckboxState();
+                createDeviceCheckboxes(storeData, selectedDeviceType);
             }).fail((error) => {
                 console.error("Error fetching data:", error);
             });
         }
 
         function updateChart(store, deviceType) {
-            const storeData = allData[store] || [];
-            const filteredData = storeData.filter(device => device.type === deviceType);
+            const storeData = calculateRanks(allData[store] || [], deviceType);
 
-            const datasets = filteredData
-                .filter(device => selectedDevices.includes(device.device))
-                .map((item, index) => ({
-                    label: `${item.device} (${item.macAddr})`,
-                    data: item.rssi.map((value, timeIndex) => ({ x: timeIndex + 1, y: value })),
-                    borderColor: `hsl(${index * 20}, 70%, 50%)`,
-                    backgroundColor: `hsl(${index * 20}, 70%, 50%, 0.3)`,
-                    tension: 0.4,
-                    fill: false,
-                }));
+            const filteredData = storeData.filter(device => selectedDevices.includes(device.device));
+
+            const datasets = filteredData.map((item, index) => ({
+                label: `${item.device} (${item.macAddr}) (Rank: ${item.rank})`,
+                data: item.rssi.map((value, timeIndex) => ({ x: timeIndex + 1, y: value })),
+                borderColor: `hsl(${index * 20}, 70%, 50%)`,
+                backgroundColor: `hsl(${index * 20}, 70%, 50%, 0.3)`,
+                tension: 0.4,
+                fill: false,
+            }));
 
             if (lineChart) lineChart.destroy();
 
@@ -214,36 +224,76 @@
                     },
                 },
             });
-            populateTable(storeData, deviceType);
         }
+
+        function calculateRanks(storeData, deviceType) {
+            // 데이터를 필터링
+            const filteredData = storeData.filter(device => device.type === deviceType);
+
+            // 평균 RSSI 계산 및 그룹화
+            const deviceData = filteredData.map(device => {
+                const avgRSSI = device.rssi.length
+                    ? (device.rssi.reduce((sum, value) => sum + value, 0) / device.rssi.length).toFixed(2)
+                    : null;
+                return { ...device, avgRSSI: avgRSSI ? parseFloat(avgRSSI) : "undefined" };
+            });
+
+            // RANK 계산
+            deviceData.sort((a, b) => (b.avgRSSI === "undefined" ? -1 : b.avgRSSI) - (a.avgRSSI === "undefined" ? -1 : a.avgRSSI));
+            let rank = 1;
+            deviceData.forEach((device, index) => {
+                if (device.avgRSSI !== "undefined") {
+                    if (index > 0 && device.avgRSSI !== deviceData[index - 1].avgRSSI) {
+                        rank = index + 1;
+                    }
+                    device.rank = rank;
+                } else {
+                    device.rank = "undefined";
+                }
+            });
+
+            console.log("Ranked Data:", deviceData); // 디버깅용 로그
+            return deviceData;
+        }
+
+        // 업데이트된 `createDeviceCheckboxes` 함수
         function createDeviceCheckboxes(storeData, deviceType) {
             const $deviceCheckboxes = $("#deviceCheckboxes");
             $deviceCheckboxes.empty();
 
-            const filteredData = storeData.filter(device => device.type === deviceType);
-            selectedDevices = filteredData.map(device => device.device);
+            // 필터링된 데이터 가져오기
+            const filteredData = calculateRanks(storeData, deviceType);
+            selectedDevices = filteredData.map(device => device.device); // 모든 디바이스 선택
 
+            // 체크박스 생성
             filteredData.forEach(device => {
-                const $checkbox = $(`<input type="checkbox" id="${device.device}" value="${device.device}" checked>`);
-
-                $checkbox.on("change", function () {
-                    if (this.checked) {
-                        selectedDevices.push(device.device);
-                    } else {
-                        selectedDevices = selectedDevices.filter(d => d !== device.device);
-                    }
-                    updateChart($("#storeSelect").val(), $("#deviceTypeSelect").val());
-                });
-
-                const $label = $(`<label for="${device.device}">${device.device} (${device.macAddr})</label>`);
-
+                const isChecked = selectedDevices.includes(device.device);
+                const $checkbox = $(`<input type="checkbox" id="${device.device}" value="${device.device}" ${isChecked ? "checked" : ""}>`);
+                const $label = $(`<label for="${device.device}">${device.device} (Rank: ${device.rank || "N/A"})</label>`);
                 const $container = $("<div></div>").append($checkbox, $label);
+
                 $deviceCheckboxes.append($container);
             });
+
+            // 전체 선택 상태 동기화
+            updateSelectAllCheckboxState();
+        }
+    
+
+        function updateSelectAllCheckboxState() {
+            const $deviceCheckboxes = $("#deviceCheckboxes");
+            const allChecked = $deviceCheckboxes.find("input[type=checkbox]").length ===
+                $deviceCheckboxes.find("input[type=checkbox]:checked").length;
+            $("#selectAll").prop("checked", allChecked);
         }
 
         function populateTable(storeData, deviceType) {
-            const filteredData = storeData.filter(device => device.type === deviceType);
+            const rankedData = calculateRanks(storeData, deviceType);
+
+            const filteredData = rankedData
+                .filter(device => device.type === deviceType)
+                .filter(device => selectedDevices.includes(device.device));
+
             const $tableHead = $("#dataTable thead tr");
             const $tableBody = $("#dataTable tbody");
 
@@ -263,48 +313,14 @@
             $tableHead.append("<th>평균 RSSI</th>");
             $tableHead.append("<th>RANK</th>");
 
-            // 평균 RSSI 계산 및 그룹화
-            const groupedData = {};
-            filteredData.forEach(device => {
-                const key = `${device.device}_${device.macAddr}`;
-                if (!groupedData[key]) {
-                    groupedData[key] = {
-                        device: device.device,
-                        macAddr: device.macAddr,
-                        rssi: [],
-                    };
-                }
-                groupedData[key].rssi = groupedData[key].rssi.concat(device.rssi.filter(rssi => rssi !== undefined && rssi !== ""));
-            });
-
-            const deviceData = Object.values(groupedData).map(device => {
-                const avgRSSI = device.rssi.length
-                    ? (device.rssi.reduce((sum, value) => sum + value, 0) / device.rssi.length).toFixed(2)
-                    : "없음";
-                return { ...device, avgRSSI: avgRSSI === "없음" ? null : parseFloat(avgRSSI) };
-            });
-
-            // RANK 계산 (평균 RSSI 내림차순, 동순위 처리)
-            deviceData.sort((a, b) => b.avgRSSI - a.avgRSSI);
-            let rank = 1;
-            deviceData.forEach((device, index) => {
-                if (index > 0 && device.avgRSSI !== deviceData[index - 1].avgRSSI) {
-                    rank = index + 1;
-                }
-                device.rank = rank;
-            });
-
             // RANK 기준 정렬
-            deviceData.sort((a, b) => a.rank - b.rank);
+            const deviceData = [...filteredData].sort((a, b) => a.rank - b.rank);
 
             // 테이블 데이터 추가
             $tableBody.empty();
             deviceData.forEach(device => {
-                const key = `${device.device}_${device.macAddr}`;
-                const groupedDevice = groupedData[key];
-
-                const $row = $(`<tr><td>${device.device} (${device.macAddr})</td></tr>`);
-                let rssiValues = groupedDevice.rssi;
+                const $row = $(`<tr data-device="${device.device}"><td>${device.device} (${device.macAddr})</td></tr>`);
+                const rssiValues = device.rssi;
 
                 // RSSI 데이터 추가
                 for (let i = 0; i < maxTimeIndex; i++) {
@@ -321,7 +337,7 @@
                 for (let i = 1; i < rssiValues.length; i++) {
                     const change = Math.abs(rssiValues[i] - rssiValues[i - 1]);
                     if (change >= 1) {
-                        changes.push(change); // 1 이상만 포함
+                        changes.push(change);
                     }
                 }
 
@@ -351,43 +367,118 @@
 
                 $tableBody.append($row);
             });
+
+            // 랭크별 체크박스 생성
+            //createDeviceCheckboxes(rankedData, deviceType);
         }
 
         function initialize() {
             const selectedStore = $("#storeSelect").val();
             const selectedDeviceType = $("#deviceTypeSelect").val();
             const storeData = allData[selectedStore] || [];
+
+            // 체크박스 생성 및 정렬
             createDeviceCheckboxes(storeData, selectedDeviceType);
+
+            // 차트 및 테이블 초기화
             updateChart(selectedStore, selectedDeviceType);
+            populateTable(storeData, selectedDeviceType);
         }
 
         $(document).ready(function () {
+            const $deviceCheckboxes = $("#deviceCheckboxes");
+            const $tableBody = $("#dataTable tbody");
+
+            // 탭 클릭 시 활성화 처리 및 데이터 업데이트
             $(".tabs .tab").on("click", function () {
                 const target = $(this).data("target");
                 $(".tabs .tab").removeClass("active");
                 $(this).addClass("active");
                 $(".content-container").removeClass("active");
                 $(target).addClass("active");
+
+                const selectedStore = $("#storeSelect").val();
+                const selectedDeviceType = $("#deviceTypeSelect").val();
+                const storeData = allData[selectedStore] || [];
+
+                // 활성 탭에 따라 데이터 업데이트
+                if (target === "#chartContainer") {
+                    updateChart(selectedStore, selectedDeviceType); // 차트 업데이트
+                } else if (target === "#tableContainer") {
+                    populateTable(storeData, selectedDeviceType); // 테이블 업데이트
+                }
             });
 
+            // 매장 선택 시 데이터 로드
             $("#storeSelect").on("change", function () {
                 const selectedStore = $(this).val();
-                fetchData(selectedStore); // 매장 변경 시 데이터 로드
+                fetchData(selectedStore); // 선택된 매장 데이터 로드
             });
 
+            // 디바이스 타입 변경 시 초기화
             $("#deviceTypeSelect").on("change", initialize);
 
+            // 전체 선택 체크박스 동작
             $("#selectAll").on("change", function () {
                 const isChecked = this.checked;
-                $("#deviceCheckboxes input[type=checkbox]").prop("checked", isChecked);
-                selectedDevices = isChecked ? $("#deviceCheckboxes input[type=checkbox]").map(function () { return this.value; }).get() : [];
-                updateChart($("#storeSelect").val(), $("#deviceTypeSelect").val());
+
+                // 모든 체크박스 상태 변경
+                $deviceCheckboxes.find("input[type=checkbox]").prop("checked", isChecked);
+
+                // selectedDevices 배열 동기화
+                selectedDevices = isChecked
+                    ? $deviceCheckboxes.find("input[type=checkbox]").map(function () {
+                        return this.value;
+                    }).get()
+                    : [];
+
+                const selectedStore = $("#storeSelect").val();
+                const selectedDeviceType = $("#deviceTypeSelect").val();
+                const storeData = allData[selectedStore] || [];
+
+                // 활성화된 탭에 따라 업데이트
+                const activeTab = $(".tabs .tab.active").data("target");
+                if (activeTab === "#chartContainer") {
+                    updateChart(selectedStore, selectedDeviceType); // 차트 업데이트
+                } else if (activeTab === "#tableContainer") {
+                    populateTable(storeData, selectedDeviceType); // 테이블 업데이트
+                }
             });
 
-            
+            // 개별 체크박스 동작 (Event Delegation)
+            $deviceCheckboxes.on("change", "input[type=checkbox]", function () {
+                const device = $(this).val();
 
-            fetchData($("#storeSelect").val()); // 초기 데이터 로드
+                // selectedDevices 배열 업데이트
+                if ($(this).is(":checked")) {
+                    selectedDevices.push(device);
+                } else {
+                    selectedDevices = selectedDevices.filter((d) => d !== device);
+                }
+
+                const selectedStore = $("#storeSelect").val();
+                const selectedDeviceType = $("#deviceTypeSelect").val();
+                const storeData = allData[selectedStore] || [];
+
+                // 활성화된 탭에 따라 업데이트
+                const activeTab = $(".tabs .tab.active").data("target");
+                if (activeTab === "#chartContainer") {
+                    updateChart(selectedStore, selectedDeviceType); // 차트 업데이트
+                } else if (activeTab === "#tableContainer") {
+                    // 테이블을 다시 생성하여 선택한 디바이스 반영
+                    populateTable(storeData, selectedDeviceType);
+                }
+
+                // 전체 선택 체크박스 상태 업데이트
+                const allChecked = $deviceCheckboxes.find("input[type=checkbox]").length ===
+                                $deviceCheckboxes.find("input[type=checkbox]:checked").length;
+                $("#selectAll").prop("checked", allChecked);
+            });
+
+            // 데이터 초기 로드
+            fetchData($("#storeSelect").val());
         });
+
     </script>
 </body>
 </html>
