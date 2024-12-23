@@ -25,7 +25,7 @@ router.get('/spread', async(req, res) => {
                     csd.col_store_device_type
                 FROM col_store cs join col_store_device csd
                 ON cs.col_store_id = csd.col_store_id
-                WHERE cs.col_store_nm = ?
+                WHERE cs.col_store_nm = ? AND csd.col_store_device_nm <> 'KangHyunGu'
                 ORDER BY csd.col_store_device_type, csd.col_store_device_nm, cs.col_store_id asc`;
     const connection = await db;            
     const [row] = await connection.execute(sql, [store]);
