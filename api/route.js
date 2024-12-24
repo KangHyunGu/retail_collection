@@ -22,11 +22,12 @@ router.get('/spread', async(req, res) => {
                     csd.col_store_device_mac_addr,
                     csd.col_store_device_nm,
                     csd.col_store_device_rssi,
-                    csd.col_store_device_type
+                    csd.col_store_device_type,
+                    csd.REG_DATE
                 FROM col_store cs join col_store_device csd
                 ON cs.col_store_id = csd.col_store_id
                 WHERE cs.col_store_nm = ? AND csd.col_store_device_nm <> 'KangHyunGu'
-                ORDER BY csd.col_store_device_type, csd.col_store_device_nm, cs.col_store_id asc`;
+                ORDER BY csd.REG_DATE, csd.col_store_device_type, csd.col_store_device_nm, cs.col_store_id`;
     const connection = await db;            
     const [row] = await connection.execute(sql, [store]);
     res.json(row);
