@@ -91,23 +91,39 @@
         <div class="controls">
             <select id="storeSelect">
                 <option value="원체크2">원체크2</option>
+                <option value="원체크-30">원체크-30</option>
+                <option value="원체크-60">원체크-60</option>
                 <option value="본가왕뼈">본가왕뼈</option>
                 <option value="GS25 안양 skv1 2차">GS25 안양 skv1 2차</option>
                 <option value="뮤피">뮤피</option>
+                <option value="뮤피-30">뮤피-30</option>
+                <option value="뮤피-60">뮤피-60</option>
                 <option value="이마트 편의점 금정역2차">이마트 편의점 금정역2차</option>
                 <option value="스타벅스 호계지식산업센터">스타벅스 호계지식산업센터</option>
                 <option value="포메인레드 호계점">포메인레드 호계점</option>
                 <option value="GS25 호계 데시앙">GS25 호계 데시앙</option>
                 <option value="투썸플레이스 금정역">투썸플레이스 금정역</option>
+                <option value="투썸플레이스 금정역-30">투썸플레이스 금정역-30</option>
+                <option value="투썸플레이스 금정역-60">투썸플레이스 금정역-60</option>
                 <option value="CU SKV1 금정역 1차">CU SKV1 금정역 1차</option>
+                <option value="CU SKV1 금정역 1차-30">CU SKV1 금정역 1차-30</option>
+                <option value="CU SKV1 금정역 1차-60">CU SKV1 금정역 1차-60</option>
                 <option value="더 블루">더 블루</option>
+                <option value="더 블루-30">더 블루-30</option>
+                <option value="더 블루-60">더 블루-60</option>
                 <option value="컴포즈 SKV1 금정역 1차">컴포즈 SKV1 금정역 1차</option>
+                <option value="컴포즈 SKV1 금정역 1차-30">컴포즈 SKV1 금정역 1차-30</option>
+                <option value="컴포즈 SKV1 금정역 1차-60">컴포즈 SKV1 금정역 1차-60</option>
                 <option value="또바기 김밥">또바기 김밥</option>
                 <option value="이룸푸드">이룸푸드</option>
+                <option value="이룸푸드-30">이룸푸드-30</option>
+                <option value="이룸푸드-60">이룸푸드-60</option>
                 <option value="서브웨이 AK플라자 금정">서브웨이 AK플라자 금정</option>
                 <option value="유니클로 AK플라자 금정">유니클로 AK플라자 금정</option>
                 <option value="스타벅스 AK플라자 금정">스타벅스 AK플라자 금정</option>
                 <option value="탑텐 AK플라자 금정">탑텐 AK플라자 금정</option>
+                <option value="블랙차이나-30">블랙차이나-30</option>
+                <option value="블랙차이나-60">블랙차이나-60</option>
             </select>
             <select id="deviceTypeSelect">
                 <option value="BLE">BLE</option>
@@ -159,11 +175,13 @@
                         macAddr: item.col_store_device_mac_addr,
                         type: item.col_store_device_type,
                         rssi: Array(uniqueDates.length).fill(null), // 시간대별로 초기화
+                        rate: Array(uniqueDates.length).fill(null),
                     };
                 }
                 const index = uniqueDates.indexOf(item.REG_DATE);
                 if (index !== -1) {
                     groupedData[key].rssi[index] = item.col_store_device_rssi; // 시간대별로 RSSI 값 저장
+                    groupedData[key].rate[index] = item.col_store_device_scan_rate; //시간대별로 rate 값 저장
                 }
             });
     
@@ -311,7 +329,7 @@
             // 테이블 헤더 생성
             $tableHead.html("<th>Device</th>");
             uniqueDates.forEach((date, i) => {
-                $tableHead.append(`<th>${i + 1}</th>`);
+                $tableHead.append(`<th>${i + 1}(스캔율)</th>`);
             });
             $tableHead.append("<th>최소 값</th>");
             $tableHead.append("<th>최대 값</th>");
@@ -326,10 +344,11 @@
             filteredData.forEach(device => {
                 const $row = $(`<tr data-device="${device.device}" style="background-color: ${getRankColor(device.rank)};"><td>${device.device} (${device.macAddr})</td></tr>`);
                 const rssiValues = device.rssi;
-
+                const rateValues = device.rate;
                 // RSSI 데이터 추가
                 rssiValues.forEach((value, i) => {
-                    const cell = value !== null ? `<td>${value}</td>` : `<td style="background-color: #d3d3d3;"></td>`;
+                    console.log(i);
+                    const cell = value !== null ? `<td>${value}(${parseInt(rateValues[i])})</td>` : `<td style="background-color: #d3d3d3;"></td>`;
                     $row.append(cell);
                 });
 

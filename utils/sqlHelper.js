@@ -37,6 +37,7 @@ const sqlHelper = {
             }
 
         }
+        query += ` limit 30`
 
         return {query, values}
     },
