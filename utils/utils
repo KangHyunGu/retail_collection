@@ -1,0 +1,17 @@
+module.exports =  {
+    calculateBoundingBox(latNum, lngNum, radius){
+        // 위도, 경도 마진 계산
+        const latMargin = radius / 111320; // 위도 1도 ≈ 111,320m
+        const lngMargin = radius / (111320 * Math.cos(latNum * Math.PI / 180)); // 경도 마진 계산
+      
+        // Bounding Box 계산
+        return {
+          minLat: latNum - latMargin,
+          maxLat: latNum + latMargin,
+          minLng: lngNum - lngMargin,
+          maxLng: lngNum + lngMargin,
+        };
+    }
+}
+
+

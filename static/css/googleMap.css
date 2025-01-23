@@ -1,0 +1,396 @@
+/* 전체 레이아웃 */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+}
+
+h1 {
+    margin: 20px 0;
+}
+
+/* 검색바 및 컨트롤 영역 */
+#controls {
+    position: absolute;
+    top: 10px; /* 지도의 상단에 고정 */
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000; /* 지도 위에 배치 */
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.9); /* 투명 배경 */
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+#controls input, #controls select, #controls button {
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    outline: none;
+    transition: all 0.2s;
+}
+
+#controls input:focus, #controls select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+#controls button {
+    background: #007bff;
+    color: white;
+    cursor: pointer;
+}
+
+#controls button:hover {
+    background: #0056b3;
+}
+
+#controls button:disabled {
+    background-color: #aaa;
+}
+
+/* 지도 */
+#map {
+    position: absolute; /* 화면 전체를 덮음 */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1; /* 검색바보다 뒤에 배치 */
+    margin: 0;
+    padding: 0;
+}
+
+
+/* 결과 영역 */
+#results {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    width: 300px;
+    max-height: 200px;
+    overflow-y: auto;
+    background: rgba(255, 255, 255, 0.9); /* 투명 배경 */
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+    z-index: 1000; /* 지도 위에 배치 */
+}
+
+#results div {
+    margin-bottom: 10px;
+    padding: 5px;
+    border-bottom: 1px solid #ddd;
+}
+
+#results div:last-child {
+    border-bottom: none;
+}
+
+/* 팝업창 스타일 */
+#popup {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+    width: 300px;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background: white;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+#popup input {
+    width: 95%;
+    padding: 10px;
+    margin-bottom: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+#popup button {
+    width: 48%;
+    padding: 10px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#popup .confirm {
+    background-color: #007bff;
+    color: white;
+}
+
+#popup .cancel {
+    background-color: #ccc;
+}
+
+#popup .confirm:hover {
+    background-color: #0056b3;
+}
+
+#popup .cancel:hover {
+    background-color: #aaa;
+}
+
+#overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+}
+
+/* 즐겨찾기 팝업 */
+#favorite-popup {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    width: 300px;
+}
+
+
+#favorite-popup input,
+#favorite-popup textarea {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-sizing: border-box;
+    font-size: 14px;
+}
+
+#favorite-popup button {
+    width: 48%;
+    padding: 10px;
+    font-size: 14px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#favorite-popup button#save-favorite {
+    background: #007bff;
+    color: white;
+}
+
+#favorite-popup button#save-favorite:hover {
+    background: #0056b3;
+}
+
+#favorite-popup button#cancel-favorite {
+    background: #ccc;
+    color: black;
+}
+
+#favorite-popup button#cancel-favorite:hover {
+    background: #aaa;
+}
+
+#favorite-list {
+    position: fixed;
+    top: 50px;
+    width: 300px;
+    margin: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    overflow-y: auto;
+    max-height: 400px; /* 화면 크기에 맞춰 높이 제한 */
+    padding: 10px;
+}
+
+#favorite-items li {
+    position: relative;
+    display: flex;
+    justify-content: space-between; /* 텍스트와 삭제 버튼을 양 끝 배치 */
+    align-items: center;
+    margin-bottom: 5px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    background-color: #ffffff;
+    transition: background-color 0.2s ease;
+}
+
+#favorite-items li:hover {
+    background-color: #f0f0f0;
+}
+
+.favorite-item-title {
+    font-weight: bold;
+    color: #007bff;
+    cursor: pointer;
+    text-decoration: none;
+    flex-grow: 1;
+}
+
+.favorite-item-content {
+    margin-top: 5px;
+    color: #333;
+    font-size: 14px;
+}
+
+.delete-icon {
+    font-size: 16px;
+    color: red;
+    cursor: pointer;
+    margin-left: 10px;
+    transition: transform 0.2s, color 0.2s;
+}
+
+.delete-icon:hover {
+    color: darkred;
+    transform: scale(1.2);
+}
+
+/* 컨텍스트 메뉴 */
+#context-menu {
+    position: absolute;
+    z-index: 1000;
+    background: white;
+    border: 1px solid #ccc;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    border-radius: 5px;
+    display: none;
+}
+
+/* 오른쪽 사이드바 */
+#right-sidebar {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    width: 300px;
+    background: rgba(255, 255, 255, 0.9);
+    border-left: 1px solid #ccc;
+    padding: 10px;
+    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    overflow-y: auto;
+}
+
+/* 데이터 목록 스타일 */
+#right-sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 50%; /* 최대 높이 설정 */
+    overflow-y: auto; /* 스크롤바 표시 */
+}
+
+#right-sidebar ul li {
+    display: flex; /* Flexbox로 정렬 */
+    justify-content: space-between; /* 양 끝에 배치 */
+    align-items: center; /* 수직 정렬 */
+    padding: 10px 0;
+    border-bottom: 1px solid #ddd;
+    font-size: 14px;
+    color: #333;
+}
+
+
+#right-sidebar ul li:last-child {
+    border-bottom: none;
+}
+
+/* 화살표 버튼 */
+#toggle-button {
+    position: absolute;
+    top: 50%;
+    right: 300px; /* 사이드바 너비와 동일하게 설정 */
+    width: 30px;
+    height: 30px;
+    background: #007bff;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    z-index: 1001;
+    transform: translateY(-50%);
+    transition: right 0.3s ease;
+}
+
+#toggle-button:hover {
+    background: #0056b3;
+}
+
+
+#right-sidebar h3 {
+    margin: 0 0 10px;
+    font-size: 18px;
+    color: #333;
+}
+
+#right-sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#right-sidebar ul li {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+#right-sidebar ul li:hover {
+    background-color: #f0f0f0;
+}
+
+/* 타입 해시태그 스타일 */
+.type-label {
+    padding: 2px 6px;
+    font-size: 12px; /* 글씨 크기 줄임 */
+    color: #FF9436; /* 검정색 또는 어두운 회색 */
+    background-color: #f0f0f0; /* 연한 회색 배경 */
+    border-radius: 12px; /* 둥근 박스 */
+    margin-left: 10px;
+    white-space: nowrap; /* 텍스트 줄바꿈 방지 */
+}
+
+
+/* 상세정보 버튼 */
+.info-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-left: 10px;
+    background: url('https://img.icons8.com/ios-filled/50/000000/info.png') no-repeat center center;
+    background-size: contain;
+    cursor: pointer;
+    vertical-align: middle;
+}

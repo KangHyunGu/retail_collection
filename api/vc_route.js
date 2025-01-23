@@ -5,6 +5,7 @@ const router = express.Router();
 const vcCustomer = require('./_model/vc/vc_customer');
 const colStoreDevice = require('./_model/col_store_device')
 const colStore = require('./_model/col_store');
+const places = require('./_model/googleMapPlaces/places');
 const moment = require('../utils/moment');
 
 
@@ -66,6 +67,18 @@ router.post("/make_customer", async(req, res) => {
   
   const results = vcCustomer.addCustomer(vcCustomer)
   res.json(true);
+})
+
+router.get("/get_near_by_place/:latitude/:longitude", async(req, res) => {
+  const {latitude, longitude} = req.params;
+  try {
+    const results = await places.getNearByPlaces(latitude, longitude);
+    res.status(200).json(results)
+  } catch (error) {
+    console.error('modile vc nearByPlace server error : ', error);
+    res.status(500).json({success: false, message : 'modile vc nearByPlace server error'})
+  }
+  
 })
 
 module.exports = router;

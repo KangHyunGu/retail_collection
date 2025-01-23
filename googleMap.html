@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Places API - Nearby & Text Search</title>
+    <link rel="stylesheet" href="/static/css/googleMap.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Google Places API Search</h1>
+    <div id="controls">
+        <input type="text" id="keyword" placeholder="Enter keyword">
+        <input type="number" id="radius" placeholder="Radius (meters)" value="500">
+        <select id="searchType">
+            <option value="text">Text Search</option>
+            <option value="nearby" selected>Nearby Search</option>
+        </select>
+        <select id="placeType">
+            <option value="all">All</option>
+            <option value="cafe">커피</option>
+            <option value="pharmacy">약국</option>
+        </select>
+        <button id="searchButton">검색</button>
+        <button id="goto">이동(위도, 경도)</button>
+        <button id="dataColButton" enabled="false">데이터 수집</button>
+    </div>
+    
+    <div id="map"></div>
+    <div id="results"></div>
+   
+    <!-- 위, 경도 입력 이동 팝업 -->
+    <div id="overlay"></div>
+    <div id="popup">
+        <input type="text" id="popup-lat" placeholder="위도 (Latitude)">
+        <input type="text" id="popup-lng" placeholder="경도 (Longitude)">
+        <div style="display: flex; justify-content: space-between;">
+            <button class="confirm" id="popup-confirm">확인</button>
+            <button class="cancel" id="popup-cancel">취소</button>
+        </div>
+    </div>
+
+
+    <!-- 즐겨찾기 팝업 -->
+    <div id="favorite-popup" style="display: none; position: fixed; z-index: 1000; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border: 1px solid #ccc; border-radius: 10px; padding: 20px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);">
+        <h3>즐겨찾기 추가</h3>
+        <form>
+            <label for="favorite-title">제목:</label><br>
+            <input type="text" id="favorite-title" required><br><br>
+
+            <label for="favorite-content">내용:</label><br>
+            <textarea id="favorite-content" rows="3" required></textarea><br><br>
+
+            <!-- 자동 입력된 위도와 경도 (비활성화) -->
+            <label for="favorite-lat">위도:</label><br>
+            <input type="text" id="favorite-lat" disabled><br><br>
+
+            <label for="favorite-lng">경도:</label><br>
+            <input type="text" id="favorite-lng" disabled><br><br>
+
+            <button type="button" id="save-favorite">저장</button>
+            <button type="button" id="cancel-favorite">취소</button>
+        </form>
+    </div>
+
+    <!-- 즐겨찾기 목록 -->
+    <div id="favorite-list">
+        <h3>즐겨찾기 목록</h3>
+        <ul id="favorite-items" style="padding: 5px;"></ul>
+    </div>
+
+     <!-- 오른쪽 사이드바 -->
+     <div id="right-sidebar">
+        <h3>수집된 데이터 목록</h3>
+        <ul id="data-list">
+            <!-- 수집된 데이터가 여기에 동적으로 추가됩니다 -->
+        </ul>
+    </div>
+    
+
+    <div id="toggle-button">
+        <span>&#x25C0;</span> <!-- 왼쪽 화살표 -->
+    </div>
+
+    <!-- 컨텍스트 메뉴 (마커 클릭 후 오른쪽 마우스)-->
+    <div id="context-menu" style="display: none; position: absolute; z-index: 1000; background: white; border: 1px solid #ccc; border-radius: 5px; padding: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);">
+        <ul style="list-style-type: none; margin: 0; padding: 0;">
+            <li id="add-favorite" style="cursor: pointer; padding: 5px;">즐겨찾기 추가</li>
+        </ul>
+    </div>
+
+    <script src="./static/js/googleMap.js"></script>
+</body>
+</html>

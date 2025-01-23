@@ -8,7 +8,10 @@ const TABLE = {
     VC_MT_STORE: 'vc_mt_store',
     VC_CUSTOMER: 'vc_customer',
     VC_VISITOR: 'vc_visitor',
-    VC_VISITOR_STORE_USE: 'vc_visitor_store_use'
+    VC_VISITOR_STORE_USE: 'vc_visitor_store_use',
+    PLACES: 'places',
+    PLACES_TYPE: 'places_types',
+    PLACES_FAV: 'places_fav',
 }
 
 module.exports = TABLE;

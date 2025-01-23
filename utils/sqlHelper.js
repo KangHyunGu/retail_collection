@@ -37,10 +37,19 @@ const sqlHelper = {
             }
 
         }
-        query += ` limit 30`
+        //query += ` limit 30`
 
         return {query, values}
     },
+
+    SelectSimpleLimit(table, page, limit, data = null, cols = [], sort = null, group = []){
+        let {query, values} = this.SelectSimple(table, data, cols, sort, group)
+        const start = page || (page - 1) * limit
+        let limitSql = ` LIMIT ${start},${limit}`
+        query = `${query} ${limitSql}`
+        return {query, values}
+    },
+
     Insert(table, data){
         let query = `INSERT INTO ${table} ({1}) VALUES ({2})`;
         const keys = Object.keys(data);
