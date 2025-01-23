@@ -94,6 +94,13 @@ const places = {
         const connection = await db;
         const [row] = await connection.execute(sql, params);
         return row;
+    },
+
+    async makeVcGpsLog(logData){
+        const sql = sqlHelper.Insert(TABLE.VC_GPS_LOG, logData);
+        const connection = await db;
+        const [row] = await connection.execute(sql.query, sql.values);
+        return row;
     }
 }
 

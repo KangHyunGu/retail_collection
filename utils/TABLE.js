@@ -12,6 +12,7 @@ const TABLE = {
     PLACES: 'places',
     PLACES_TYPE: 'places_types',
     PLACES_FAV: 'places_fav',
+    VC_GPS_LOG: 'vc_gps_log',
 }
 
 module.exports = TABLE;

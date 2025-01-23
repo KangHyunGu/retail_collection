@@ -81,4 +81,11 @@ router.get("/get_near_by_place/:latitude/:longitude", async(req, res) => {
   
 })
 
+router.post('/make_vc_gps_log', async(req, res) => {
+   const logData = req.body;
+   console.log('logData : ', logData);
+   const results = await places.makeVcGpsLog(logData);
+   res.json(results.affectedRows == 1);
+})
+
 module.exports = router;
