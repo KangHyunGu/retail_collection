@@ -71,8 +71,6 @@ const places = {
                     SIN(RADIANS(?)) * SIN(RADIANS(geometry_lat))
                 )
             ) <= ?
-          AND ? BETWEEN offset_south_lat AND offset_north_lat
-          AND ? BETWEEN offset_west_lng AND offset_east_lng
         ORDER BY distance ASC;
       `;
 
@@ -91,8 +89,6 @@ const places = {
             longitude, // 거리 계산 중심 경도
             latitude, // 거리 계산 중심 위도
             radius, // 반경 100m 조건
-            latitude, // 동/서/남/북 경계 조건 위도
-            longitude, // 동/서/남/북 경계 조건 경도
         ];
 
         const connection = await db;
