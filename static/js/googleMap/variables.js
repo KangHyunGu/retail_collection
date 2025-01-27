@@ -25,7 +25,7 @@ let favoriteIcon;
 
 const types = 
     {
-        "special" : {title:"기타", icon: "https://img.icons8.com/color/50/marker-pen.png"},
-        "cafe"    : {title:"커피숍", icon: "https://img.icons8.com/color/50/cafe-building.png"},
-        "pharmacy": {title:"약국", icon: "https://img.icons8.com/color/50/drugstore.png"}
+        "special" : {icon: "https://img.icons8.com/color/50/marker-pen.png"},
+        "cafe"    : {icon: "https://img.icons8.com/color/50/cafe-building.png"},
+        "pharmacy": {icon: "https://img.icons8.com/color/50/drugstore.png"}
     }

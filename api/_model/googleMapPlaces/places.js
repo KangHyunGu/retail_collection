@@ -1,7 +1,8 @@
 const db = require('../../../plugins/mysql');
 const sqlHelper = require('../../../utils/sqlHelper');
 const TABLE = require('../../../utils/TABLE');
-const utils = require('../../../utils/utils')
+const utils = require('../../../utils/utils');
+const moment = require('../../../utils/moment');
 
 const places = {
     // place log 가져오기 임시 테스트용
@@ -14,13 +15,40 @@ const places = {
 
     async getPlaces(page, limit){
         const sql = `SELECT PLA.*, 
-                            (SELECT type from ${TABLE.PLACES_TYPE} WHERE places_id = PLA.id) AS type
+                            (SELECT type from ${TABLE.PLACES_TYPE} WHERE type = PLA.type) AS type,
+                            (SELECT type_name from ${TABLE.PLACES_TYPE} WHERE type = PLA.type) as type_name
                      FROM ${TABLE.PLACES} PLA
                      ORDER BY id DESC
                      LIMIT ${page - 1}, ${page * limit}
                      `;
         const connection = await db;
         const [row] = await connection.execute(sql);
+        return row;
+    },
+
+    async createPlaces(datas){
+        const process_id = moment.createKey();
+        
+        for(const data of datas){
+            data.process_id = process_id;
+        }
+
+        const sql = sqlHelper.InsertArray(TABLE.PLACES, datas);
+        const connection = await db;
+        const [row] = await connection.execute(sql.query, sql.values);
+
+
+        // 데이터 입력 후 places_region_id 연결 처리
+        const updateQuery = `
+             UPDATE places p
+            JOIN places_region r
+            ON p.geometry_lat BETWEEN r.offset_south_lat AND r.offset_north_lat
+               AND p.geometry_lng BETWEEN r.offset_west_lng AND r.offset_east_lng
+            SET p.places_region_id = r.id
+            WHERE p.process_id >= ?
+        `
+        await connection.execute(updateQuery, [process_id]);
+
         return row;
     },
 

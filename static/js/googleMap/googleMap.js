@@ -67,6 +67,7 @@ function createCircle(lat, lng, radius) {
         fillColor: "#007bff", // 원 내부 색상
         fillOpacity: 0.2,
         clickable: false, // 클릭 이벤트 차단 해제
+        zIndex: 100
     })
 }
 

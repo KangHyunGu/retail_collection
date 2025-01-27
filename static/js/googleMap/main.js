@@ -81,11 +81,7 @@ $(document).ready(() => {
     })
 
     $("#dataColButton").click(() => {
-        const customDatas = [];
-        for(const marker of markers){
-            customDatas.push(marker.customData);
-        }
-        createPlaceCollections(customDatas);
+        processPlacesCreate();
     })
 
     $('#clear').click(() => {
@@ -127,28 +123,36 @@ function initsettings() {
             // 2. 서버에서 API 키를 정상적으로 가져온다면 head URL Google Map 라이브러리 스크립트 cdn 생성
             $.getScript(`https://maps.googleapis.com/maps/api/js?key=${data.apiKey}&libraries=places`)
             .done(() => {
-                //const geocoder = new google.maps.Geocoder();
-                // geocoder.geocode({ address: '가미노다' }, (results, status) => {
-                //     if (status === "OK") {
-                //         const bounds = results[0].geometry.bounds;
-                //         map.fitBounds(bounds);
-                //         console.log(results[0]);
-                //         console.log(results[0].geometry.location.lat(),' ', results[0].geometry.location.lng());
-                //     // Bounds를 시각적으로 표시
-                //         const rectangle = new google.maps.Rectangle({
-                //             bounds: bounds,
-                //             strokeColor: "#FF0000",
-                //             strokeOpacity: 0.8,
-                //             strokeWeight: 2,
-                //             fillColor: "#FF0000",
-                //             fillOpacity: 0.2,
-                //             map: map,
-                //         });
+                const geocoder = new google.maps.Geocoder();
+                geocoder.geocode({ address: '다쓰노시' }, (results, status) => {
+                    if (status === "OK") {
+                        const bounds = results[0].geometry.bounds;
+                        map.fitBounds(bounds);
+                        console.log(results[0]);
+                        console.log(results[0].geometry.location.lat(),' ', results[0].geometry.location.lng());
+                    // Bounds를 시각적으로 표시
+                        const rectangle = new google.maps.Rectangle({
+                            bounds: bounds,
+                            strokeColor: "#FF0000",
+                            strokeOpacity: 0.8,
+                            strokeWeight: 2,
+                            fillColor: "#FF0000",
+                            fillOpacity: 0.2,
+                            map: map,
+                        });
 
-                //     } else {
-                //         console.error("Geocoding 실패:", status);
-                //     }
-                // });
+                         // Rectangle 클릭 이벤트 추가
+                        rectangle.addListener("click", (event) => {
+                            console.log('bounds click');
+                            google.maps.event.trigger(map, "click", {
+                                latLng: event.latLng
+                            });
+                        });
+
+                    } else {
+                        console.error("Geocoding 실패:", status);
+                    }
+                });
                 
                 // 3. 지도 초기화
                 initMap(); 

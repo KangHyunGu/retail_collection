@@ -10,7 +10,7 @@ const TABLE = {
     VC_VISITOR: 'vc_visitor',
     VC_VISITOR_STORE_USE: 'vc_visitor_store_use',
     PLACES: 'places',
-    PLACES_TYPE: 'places_types',
+    PLACES_TYPE: 'places_type',
     PLACES_FAV: 'places_fav',
     VC_GPS_LOG: 'vc_gps_log',
 }

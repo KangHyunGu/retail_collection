@@ -72,7 +72,8 @@ router.post('/create_favorite', async(req, res) => {
 // 장소 데이터 수집
 router.post('/create_place_collections', async(req, res) => {
     const data = req.body;
-    console.log('create_place_collections : ', data);
+    const results = await places.createPlaces(data);
+    console.log(results);
     try {
         res.status(201).json({success: true, data, message: '장소 수집 입력이 완료되었습니다.'})
     } catch(error) {
