@@ -6,6 +6,14 @@
     <title>Google Places API - Nearby & Text Search</title>
     <link rel="stylesheet" href="/static/css/googleMap.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="./static/js/googleMap/variables.js"></script>
+    <script src="./static/js/googleMap/favorites.js"></script>
+    <script src="./static/js/googleMap/fetchs.js"></script>
+    <script src="./static/js/googleMap/googleMap.js"></script>
+    <script src="./static/js/googleMap/placeCollections.js"></script>
+    <script src="./static/js/googleMap/placeSearch.js"></script>
+    <script src="./static/js/googleMap/main.js"></script>
+    <script src="./static/js/common/utils.js"></script>
 </head>
 <body>
     <h1>Google Places API Search</h1>
@@ -22,8 +30,9 @@
             <option value="pharmacy">약국</option>
         </select>
         <button id="searchButton">검색</button>
+        <button id="clear">초기화</button>
         <button id="goto">이동(위도, 경도)</button>
-        <button id="dataColButton" enabled="false">데이터 수집</button>
+        <button id="dataColButton" disabled>데이터 수집</button>
     </div>
     
     <div id="map"></div>
@@ -89,6 +98,7 @@
         </ul>
     </div>
 
-    <script src="./static/js/googleMap.js"></script>
+    <!-- <script src="./static/js/googleMap.js"></script> -->
+   
 </body>
 </html>

@@ -6,23 +6,30 @@ let contextMenuMarker = null; // 컨텍스트 메뉴가 표시된 마커
 let favorites = []; // 즐겨찾기 데이터 배열
 let circle = null;  // 중심원을 저장하는 변수
 let collectionPlaces = [];
+let collectionMarkers = [];
 
 let currentPlaceListPage = 1;
+
+let isSearch = false;
 
 // icon 관련 사이트
 // https://icons8.com
 const currentMapMarkerIcon = "https://img.icons8.com/ultraviolet/36/marker.png"; // 파란색 마커 아이콘
-const yellowStarIcon = "https://img.icons8.com/flat-round/36/star--v1.png"
+const yellowStarIcon = "https://img.icons8.com/flat-round/36/star--v1.png";
+
+// VC 체크용 Icon
+const vcCheckIcon = "https://img.icons8.com/emoji/50/check-mark-emoji.png";
+
 
 let favoriteIcon;
 
-const types = [
+const types = 
     {
-        "special" : "기타",
-        "cafe"    : "커피숍",
-        "pharmacy": "약국"  
+        "special" : {title:"기타", icon: "https://img.icons8.com/color/50/marker-pen.png"},
+        "cafe"    : {title:"커피숍", icon: "https://img.icons8.com/color/50/cafe-building.png"},
+        "pharmacy": {title:"약국", icon: "https://img.icons8.com/color/50/drugstore.png"}
     }
-]
+
 
 $(document).ready(() => {
     let isSidebarVisible = true;
@@ -84,7 +91,7 @@ $(document).ready(() => {
         if (!isNaN(lat) && !isNaN(lng)) {
             const location = { lat, lng };
             map.setCenter(location);
-            map.setZoom(15);
+            map.setZoom(20);
 
             new google.maps.Marker({
                 position: location,
@@ -113,6 +120,36 @@ $(document).ready(() => {
             circle.setMap(null);
         }
     })
+
+    $("#dataColButton").click(() => {
+        const customDatas = [];
+        for(const marker of markers){
+            customDatas.push(marker.customData);
+        }
+        createPlaceCollections(customDatas);
+    })
+
+    $('#clear').click(() => {
+        // 수집버튼 비활성화
+        isSearch = false;
+        $("#dataColButton").attr('disabled', true);
+
+        // 검색 된 리스트 제거
+        $('#results').html('');
+
+        // 선택 된 마커 제거
+        if(currentMapMarker != null){
+            currentMapMarker.setMap(null);
+        }   
+
+        // circle 제거
+        if(circle != null){
+            circle.setMap(null);
+        }
+
+        // 결과 marker 제거
+        clearMarkers();
+    })
 });
 
 const initsettings = () => {
@@ -131,6 +168,30 @@ const initsettings = () => {
             // 2. 서버에서 API 키를 정상적으로 가져온다면 head URL Google Map 라이브러리 스크립트 cdn 생성
             $.getScript(`https://maps.googleapis.com/maps/api/js?key=${data.apiKey}&libraries=places`)
             .done(() => {
+
+
+                //const geocoder = new google.maps.Geocoder();
+                // geocoder.geocode({ address: '가미노다' }, (results, status) => {
+                //     if (status === "OK") {
+                //         const bounds = results[0].geometry.bounds;
+                //         map.fitBounds(bounds);
+                //         console.log(results[0]);
+                //         console.log(results[0].geometry.location.lat(),' ', results[0].geometry.location.lng());
+                //     // Bounds를 시각적으로 표시
+                //         const rectangle = new google.maps.Rectangle({
+                //             bounds: bounds,
+                //             strokeColor: "#FF0000",
+                //             strokeOpacity: 0.8,
+                //             strokeWeight: 2,
+                //             fillColor: "#FF0000",
+                //             fillOpacity: 0.2,
+                //             map: map,
+                //         });
+
+                //     } else {
+                //         console.error("Geocoding 실패:", status);
+                //     }
+                // });
                 
                 // 3. 지도 초기화
                 initMap(); 
@@ -142,6 +203,8 @@ const initsettings = () => {
                 fetchCollectionPlaces();
                 // 7. 즐겨찾기 목록 가져옴
                 fetchFavorites();
+                // 8. 임시 테스트용
+                fetchPlaceLogs();
             })
             .fail(() => {
                 console.error('Google Maps API 로드 실패');
@@ -149,6 +212,48 @@ const initsettings = () => {
             });
         }
     })
+}
+
+const fetchPlaceLogs = async () => {
+    const area_name = 3;
+    const response = await fetch(`/api/places/getPlaceLogs/${area_name}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    });
+
+    if(!response.ok){return}
+
+    const data = await response.json();
+   
+    const placeLogs = data.placeLogs;
+    for(const log of placeLogs){
+        const lat = log.geometry_lat;
+        const lng = log.geometry_lng;
+        const markerOptions = {
+            position: {lat,lng},
+            map,
+            title: log.place_name,
+            icon: vcCheckIcon,
+        }
+
+        const marker = createMarker(markerOptions)
+         // InfoWindow에 표시할 내용
+            const infoWindowContent = `
+                <p>거리: ${log.distance.toFixed(2)} m</p>
+                <p>시간: ${formatTimestampCustom(log.time_stamp)}</p>
+        `;
+
+        const infoWindow = new google.maps.InfoWindow({
+            content: infoWindowContent,
+        });
+
+            // 마커 클릭 시 말풍선 표시
+        marker.addListener('click', () => {
+            infoWindow.open(map, marker);
+        });
+    }
 }
 
 const adjustSidebarHeight = () => {
@@ -174,7 +279,7 @@ const adjustSidebarHeight = () => {
     $(window).resize(adjustSidebarHeight);
 
     // 구글 맵이 로드되었을 때 높이 조정 (비동기 로딩 고려)
-    setTimeout(adjustSidebarHeight, 1000); // 구글맵 로딩 완료 후 실행
+    setTimeout(adjustSidebarHeight, 500); // 구글맵 로딩 완료 후 실행
 
  }
 
@@ -342,13 +447,14 @@ const updatePlacesCollectionList = () => {
 
     const $dataList = $('#data-list');
     $dataList.empty();
-    console.log(endIndex);
+
     for(let idx = startIndex; idx < endIndex; idx++){
-        console.log(collectionPlaces, " ", collectionPlaces[idx]);
         const place_name = collectionPlaces[idx].place_name;
         const formatted_address = collectionPlaces[idx].formatted_address;
-        const type = types[collectionPlaces[idx].type] || "기타";
-        
+        const type = types[collectionPlaces[idx].type].title || "기타";
+        const lat = collectionPlaces[idx].geometry_lat;
+        const lng = collectionPlaces[idx].geometry_lng;
+
         const listItem = $(`
             <li>
                <span><strong>${place_name}</strong><br>${formatted_address}</span>
@@ -361,13 +467,20 @@ const updatePlacesCollectionList = () => {
         `)
 
         $dataList.append(listItem);
-
-        listItem.click(() => {
-            const lat = collectionPlaces[idx].geometry_lat;
-            const lng = collectionPlaces[idx].geometry_lng;
+       
+        listItem.click(() => {    
             map.setCenter({lat, lng});
-            map.setZoom(15);
+            map.setZoom(20);
         })
+
+        const markerOptions = {
+            position: {lat, lng},
+            map: map,
+            icon: types[collectionPlaces[idx].type].icon
+        }
+
+        const marker = createMarker(markerOptions);
+        collectionMarkers.push(marker);
     }
 
 }
@@ -452,6 +565,10 @@ const updateFavoriteList = () => {
             position: {lat, lng},
             map,
             title: favorite.title,
+            id: favorite.id,
+            content: favorite.content,
+            geometry_lat: lat,
+            geometry_lng: lng,
             icon: favoriteIcon
         }
 
@@ -461,7 +578,7 @@ const updateFavoriteList = () => {
         // 즐겨찾기 항목 클릭 시 해당 위치로 이동
         item.click(() => {
             map.setCenter({ lat, lng });
-            map.setZoom(15);
+            map.setZoom(20);
         });
 
         
@@ -534,17 +651,22 @@ const closeContextMenu = () => {
 
 const performTextSearch = (query) => {
     const service = new google.maps.places.PlacesService(map);
-
     service.textSearch({ query, fields: ['next_page_token'] }, (results, status, pagination) => {
         if (status === google.maps.places.PlacesServiceStatus.OK) {
             clearMarkers();
             $('#results').html('');
-        
+
+            if(results.length) {
+                isSearch = true;
+                $("#searchButton").attr('disabled', false);
+            }
+
             results.forEach((result) => {
                 const markerOptions = {
                     position: result.geometry.location,
                     map,
                     title: result.name,
+
                 }
                 
                 const marker = createMarker(markerOptions)
@@ -565,33 +687,183 @@ const performTextSearch = (query) => {
 const performNearbySearch = (keyword, radius, location = map.getCenter(), type = '') => {
     const service = new google.maps.places.PlacesService(map);
 
+    // 페이지네이션 관련 변수
+    const resultsPerPage = 20; // 한 페이지당 결과 수
+    let currentPage = 1;       // 현재 페이지
+    let cachedResults = [];    // 모든 검색 결과를 저장할 배열
+
+    const renderResults = (results) => {
+        // 결과 초기화 (페이징 컨트롤 제외)
+        $('#results').html('');
+        clearMarkers();
+        // 결과 렌더링
+        results.forEach((result) => {
+            const place = result;
+            const markerOptions = {
+                position: place.geometry.location,
+                map,
+                title: place.name,
+                customData: {
+                    place_name: place.name,
+                    place_id: place.place_id,
+                    business_status: place.business_status,
+                    formatted_address: place.formatted_address || place.vicinity,
+                    icon_url: place.icon,
+                    icon_background_color: place.icon_background_color,
+                    plus_code_compound: place.plus_code?.compound_code,
+                    plus_code_global: place.plus_code?.global_code,
+                    geometry_lat: place.geometry.location.lat(),
+                    geometry_lng: place.geometry.location.lng(),
+                    attributions_url:
+                        place.photos != null && place.photos.length
+                            ? place.photos[0].getUrl()
+                            : null,
+                },
+            };
+            const marker = createMarker(markerOptions);
+            markers.push(marker);
+
+            const resultHtml = `
+                <div>
+                    <strong>${place.name}</strong><br>
+                    ${place.formatted_address || place.vicinity}
+                </div>`;
+            $('#results').append(resultHtml);
+        });
+
+        // 페이징 컨트롤 업데이트
+        createPaginationControls();
+    };
+
+    const createPaginationControls = () => {
+        let $paginationControls = $('#pagination-controls');
+
+        // 컨트롤 초기화
+        if (!$paginationControls.length) {
+            $paginationControls = $(`
+                <div id="pagination-controls" style="text-align: center; margin-top: 10px;">
+                    <button id="prev-page" disabled>이전</button>
+                    <button id="next-page" disabled>다음</button>
+                </div>
+            `);
+            $('#results').append($paginationControls);
+        }
+
+        const $prevButton = $paginationControls.find('#prev-page');
+        const $nextButton = $paginationControls.find('#next-page');
+
+        // "이전" 버튼 클릭 이벤트
+        $prevButton.off('click').on('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                const startIndex = (currentPage - 1) * resultsPerPage;
+                const endIndex = Math.min(startIndex + resultsPerPage, cachedResults.length);
+                const pageResults = cachedResults.slice(startIndex, endIndex);
+                renderResults(pageResults);
+            }
+        });
+
+        // "다음" 버튼 클릭 이벤트
+        $nextButton.off('click').on('click', () => {
+            if (currentPage < Math.ceil(cachedResults.length / resultsPerPage)) {
+                currentPage++;
+                const startIndex = (currentPage - 1) * resultsPerPage;
+                const endIndex = Math.min(startIndex + resultsPerPage, cachedResults.length);
+                const pageResults = cachedResults.slice(startIndex, endIndex);
+                renderResults(pageResults);
+            } else {
+                pagination.nextPage();
+            }
+        });
+
+        updatePaginationButtons();
+    };
+
+    const updatePaginationButtons = () => {
+        const $prevButton = $('#prev-page');
+        const $nextButton = $('#next-page');
+
+        $prevButton.prop('disabled', currentPage === 1);
+        $nextButton.prop(
+            'disabled',
+            currentPage >= Math.ceil(cachedResults.length / resultsPerPage)
+        );
+    };
+
+    const fetchNextPage = (pagination) => {
+        if (pagination.hasNextPage) {
+            pagination.nextPage();
+        } else {
+            // 모든 결과 로드 완료 후 첫 페이지 렌더링
+            const startIndex = (currentPage - 1) * resultsPerPage;
+            const endIndex = Math.min(startIndex + resultsPerPage, cachedResults.length);
+            const pageResults = cachedResults.slice(startIndex, endIndex);
+
+            renderResults(pageResults);
+            createPaginationControls();
+        }
+    };
+
+    // 첫 번째 검색 호출
     service.nearbySearch({ location, radius, type: type || undefined }, (results, status, pagination) => {
         if (status === google.maps.places.PlacesServiceStatus.OK) {
-            clearMarkers();
-            $('#results').html('');
-            
-            results.forEach(({ name, geometry, vicinity }) => {
-                const markerOptions = {
-                    position: geometry.location,
-                    map,
-                    title: name,
-                };
-               const marker = createMarker(markerOptions)
-                markers.push(marker);
+            cachedResults = [...cachedResults, ...results];
 
-                google.maps.event.addListener(marker, 'click', () => {
-                    infoWindow.setContent(`<div><strong>${name}</strong><br>${vicinity}</div>`);
-                    infoWindow.open(map, marker);
-                });
+            // 첫 번째 페이지 결과 렌더링
+            const startIndex = (currentPage - 1) * resultsPerPage;
+            const endIndex = Math.min(startIndex + resultsPerPage, cachedResults.length);
+            const pageResults = cachedResults.slice(startIndex, endIndex);
 
-                $('#results').append(`<div><strong>${name}</strong><br>${vicinity}</div>`);
-            });
+            renderResults(pageResults);
+            createPaginationControls();
 
-            console.log(pagination);
+            // 추가 페이지 로드
+            fetchNextPage(pagination);
 
-            map.setCenter(results[0].geometry.location);
+            // 검색 결과가 있을경우 "수집" 버튼 활성화
+            if(cachedResults.length){
+                isSearch = true;
+                $("#dataColButton").prop('disabled', !isSearch)
+            }
         } else {
             alert(`Nearby search failed: ${status}`);
         }
     });
+};
+
+const createPlaceCollections= (payload) => {
+    fetch('/api/places/create_place_collections',  {
+        method: 'POST',
+        headers: {'Content-Type' : 'application/json'},
+        body: JSON.stringify(payload)
+    })
+    .then((response) => {
+        if(!response.ok){ 
+            throw new Error('데이터 수집 실패');
+        }
+        return response.json()
+    })
+    .then((data) => {
+        const places = data.data;
+        console.log('places : ', places);
+    })
+    .catch((error) => {
+        console.error(error);
+        alert('즐겨찾기 저장 중 오류가 발생했습니다.');
+    })
+}
+
+const formatTimestampCustom = (timestamp) => {
+    const date = new Date(timestamp);
+
+    const padZero = (num) => (num < 10 ? '0' : '') + num;
+
+    const year = date.getFullYear();
+    const month = padZero(date.getMonth() + 1); // 월은 0부터 시작하므로 +1
+    const day = padZero(date.getDate());
+    const hours = padZero(date.getHours());
+    const minutes = padZero(date.getMinutes());
+    const seconds = padZero(date.getSeconds());
+
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 };

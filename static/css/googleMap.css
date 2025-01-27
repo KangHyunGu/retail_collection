@@ -20,7 +20,7 @@ h1 {
     z-index: 1000; /* 지도 위에 배치 */
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 5px;
     padding: 10px;
     background: rgba(255, 255, 255, 0.9); /* 투명 배경 */
     border: 1px solid #ccc;
@@ -53,7 +53,7 @@ h1 {
 }
 
 #controls button:disabled {
-    background-color: #aaa;
+    background: #aaa;
 }
 
 /* 지도 */

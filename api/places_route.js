@@ -4,6 +4,19 @@ const router = express.Router();
 const places = require('./_model/googleMapPlaces/places')
 
 
+// places log 가져오기 임시 테스트용
+router.get('/getPlaceLogs/:area_name', async(req, res) => {
+    const area_name = Number(req.params.area_name);
+    try {
+       const results = await places.getPlaceLogs(area_name);
+       res.status(200).json({success: true, placeLogs: results});
+    } catch (error) {
+        res.status(500).json({success: false, message: 'getPlaceLogs fail'});
+    }
+
+})
+
+
 // places 가져오기
 router.get('/getPlaces', async(req, res) => {
     const page = parseInt(req.query.page) || 1;
@@ -54,7 +67,18 @@ router.post('/create_favorite', async(req, res) => {
         console.error('Database insertion error : ', error);
         res.status(500).json({success: false, message : 'Internal Server Error'});
     }
-    
+})
+
+// 장소 데이터 수집
+router.post('/create_place_collections', async(req, res) => {
+    const data = req.body;
+    console.log('create_place_collections : ', data);
+    try {
+        res.status(201).json({success: true, data, message: '장소 수집 입력이 완료되었습니다.'})
+    } catch(error) {
+        console.error('create_place_collection Database error : ', data);
+        res.status(500).json({success: false, message : 'create_place_collection Internal Server Error'})
+    }
 })
 
 module.exports = router;

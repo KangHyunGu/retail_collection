@@ -4,6 +4,14 @@ const TABLE = require('../../../utils/TABLE');
 const utils = require('../../../utils/utils')
 
 const places = {
+    // place log 가져오기 임시 테스트용
+    async getPlaceLogs(area_name){
+        const sql = sqlHelper.SelectSimple(TABLE.VC_GPS_LOG, {area_name});
+        const connection = await db;
+        const [row] = await connection.execute(sql.query, sql.values);
+        return row;
+    },
+
     async getPlaces(page, limit){
         const sql = `SELECT PLA.*, 
                             (SELECT type from ${TABLE.PLACES_TYPE} WHERE places_id = PLA.id) AS type
