@@ -12,6 +12,7 @@ const TABLE = {
     PLACES: 'places',
     PLACES_TYPE: 'places_type',
     PLACES_FAV: 'places_fav',
+    PLACES_REGION: 'places_region',
     VC_GPS_LOG: 'vc_gps_log',
 }
 

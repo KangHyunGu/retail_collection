@@ -1,7 +1,7 @@
 $(document).ready(() => {
     let isSidebarVisible = true;
     initsettings()
-    
+
     $('#toggle-button').click(function () {
         if (isSidebarVisible) {
             // 사이드바 숨기기
@@ -43,7 +43,6 @@ $(document).ready(() => {
     });
 
     $('#popup-confirm').click(() => {
-
         const lat = parseFloat($('#popup-lat').val());
         const lng = parseFloat($('#popup-lng').val());
 
@@ -105,6 +104,44 @@ $(document).ready(() => {
         // 결과 marker 제거
         clearMarkers();
     })
+
+    // Select(지역) 변경 시 이벤트 처리
+    $('#regionSelect').change(() => {
+        // 구역 선택이 바뀔 경우 초기화처리
+        collectionPlaces = [];
+        placesGetTotalCount = 0;
+
+        const selectedRegionId = $('#regionSelect').val(); // 선택된 지역 ID
+        currentRegion = places_region.find((item) => item.id == selectedRegionId);
+        
+        drawRegionBounds(currentRegion);
+
+        // 기존 활성화된 필터 버튼 해제
+        $("#filter-buttons .filter-btn").removeClass("active");
+
+        fetchCollectionPlaces(selectedRegionId, "all", 1, 50);
+    });
+
+    // 타입(약국,편의점,백화점 그 외..) 버튼 클릭시 이벤트 처리
+    $("#filter-buttons").on("click", ".filter-btn", function (event) {
+        event.stopPropagation(); // 빈 영역 클릭 이벤트 방지
+        const $this = $(this);
+        const selectedType = $this.data("type");
+        collectionPlaces = [];
+        placesGetTotalCount = 0;
+        if ($this.hasClass("active")) {
+            // 이미 활성화된 버튼을 다시 클릭하면 해제
+            $this.removeClass("active");
+            currentType = "all";
+            fetchCollectionPlaces(currentRegion.id, "all", 1, 50); // 전체 데이터 다시 불러오기
+        } else {
+            // 다른 버튼이 클릭된 경우
+            $(".filter-btn").removeClass("active");
+            $this.addClass("active");
+            currentType = selectedType;
+            fetchCollectionPlaces(currentRegion.id, selectedType, 1, 50);
+        }
+    });
 });
 
 function initsettings() {
@@ -120,57 +157,56 @@ function initsettings() {
     })
     .then((data) => {
         if(data.success){
-            // 2. 서버에서 API 키를 정상적으로 가져온다면 head URL Google Map 라이브러리 스크립트 cdn 생성
+            //2. 서버에서 API 키를 정상적으로 가져온다면 head URL Google Map 라이브러리 스크립트 cdn 생성
             $.getScript(`https://maps.googleapis.com/maps/api/js?key=${data.apiKey}&libraries=places`)
             .done(() => {
-                const geocoder = new google.maps.Geocoder();
-                geocoder.geocode({ address: '다쓰노시' }, (results, status) => {
-                    if (status === "OK") {
-                        const bounds = results[0].geometry.bounds;
-                        map.fitBounds(bounds);
-                        console.log(results[0]);
-                        console.log(results[0].geometry.location.lat(),' ', results[0].geometry.location.lng());
-                    // Bounds를 시각적으로 표시
-                        const rectangle = new google.maps.Rectangle({
-                            bounds: bounds,
-                            strokeColor: "#FF0000",
-                            strokeOpacity: 0.8,
-                            strokeWeight: 2,
-                            fillColor: "#FF0000",
-                            fillOpacity: 0.2,
-                            map: map,
-                        });
+                // const geocoder = new google.maps.Geocoder();
+                // geocoder.geocode({ address: '다쓰노시' }, (results, status) => {
+                //     if (status === "OK") {
+                //         const bounds = results[0].geometry.bounds;
+                //         console.log(bounds);
+                //         map.fitBounds(bounds);
+                //         console.log(results[0]);
+                //         console.log(results[0].geometry.location.lat(),' ', results[0].geometry.location.lng());
+                //     // Bounds를 시각적으로 표시
+                //         const rectangle = new google.maps.Rectangle({
+                //             bounds: bounds,
+                //             strokeColor: "#FF0000",
+                //             strokeOpacity: 0.8,
+                //             strokeWeight: 2,
+                //             fillColor: "#FF0000",
+                //             fillOpacity: 0.2,
+                //             map: map,
+                //         });
 
-                         // Rectangle 클릭 이벤트 추가
-                        rectangle.addListener("click", (event) => {
-                            console.log('bounds click');
-                            google.maps.event.trigger(map, "click", {
-                                latLng: event.latLng
-                            });
-                        });
+                //          // Rectangle 클릭 이벤트 추가
+                //         rectangle.addListener("click", (event) => {
+                //             console.log('bounds click');
+                //             google.maps.event.trigger(map, "click", {
+                //                 latLng: event.latLng
+                //             });
+                //         });
 
-                    } else {
-                        console.error("Geocoding 실패:", status);
-                    }
-                });
-                
+                //     } else {
+                //         console.error("Geocoding 실패:", status);
+                //     }
+                // });
                 // 3. 지도 초기화
                 initMap(); 
                 // 4.사이드 조정
                 adjustSidebarHeight();
                 // 5. 검색바 조정
                 isTypeEnabled();
-                // 6. 수집된 데이타 목록 가져옴
-                fetchCollectionPlaces();
-                // 7. 즐겨찾기 목록 가져옴
+                // 6. 지역 초기화
+                initializeRegionSelect();
+                // 7. 수집된 데이타 목록 가져옴
+                //fetchCollectionPlaces();
+                // 8. 즐겨찾기 목록 가져옴
                 fetchFavorites();
-                // 8. 임시 테스트용
+                // 9. 임시 테스트용
                 fetchPlaceLogs();
             })
-            .fail(() => {
-                console.error('Google Maps API 로드 실패');
-                alert('Google Maps API 로드 중 오류가 발생했습니다.');
-            });
+            
         }
     })
 }
@@ -200,3 +236,4 @@ function adjustSidebarHeight (){
     // 구글 맵이 로드되었을 때 높이 조정 (비동기 로딩 고려)
     setTimeout(adjustSidebarHeight, 500); // 구글맵 로딩 완료 후 실행
  }
+

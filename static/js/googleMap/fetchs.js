@@ -59,7 +59,17 @@ async function deleteFavorite(favorite) {
 async function createPlaceCollections(payload) {
     try {
         const data = await apiRequest('/api/places/create_place_collections', 'POST', payload);
-        console.log('수집된 장소:', data.data);
+        if(data.success){
+            alert('데이터 수집 처리가 완료되었습니다.');
+            const $regionSelect = $("#regionSelect");
+            $regionSelect.trigger("change"); // 이벤트 트리거
+             // 수집 여부 추가
+             const resultsWithCollectedFlag = cachedResults.map(place => ({
+                ...place,
+                is_collected: true,
+            }));
+            renderResults(resultsWithCollectedFlag);
+        }
     } catch (error) {
         alert('데이터 수집 중 오류가 발생했습니다.');
     }
@@ -99,15 +109,51 @@ async function fetchPlaceLogs() {
     }
 }
 
-// 수집 된 지도 목록
-async function fetchCollectionPlaces(page = 1, limit = 10) {
+async function fetchRegions() {
     try {
-        const data = await apiRequest(`/api/places/getPlaces?page=${page}&limit=${limit}`, 'GET');
-        if (data.success && data.places.length) {
-            collectionPlaces = [...collectionPlaces, ...data.places];
+        const data = await apiRequest(`/api/places/getRegions`, 'GET')
+        return data;
+    } catch (error) {
+        console.error('지역 데이터 가져오는 중 오류 발생 : ', error)
+        throw error;
+    }
+}
+
+// 수집 된 지도 목록
+async function fetchCollectionPlaces(
+    places_region_id = null,
+    type = "all",
+    page = 1,
+    limit = 50) {
+    try {
+        // 첫 페이지 요청 시, 총 데이터 개수 확인
+        if(page == 1 && placesGetTotalCount == 0){
+            console.log('places_region_id : ', places_region_id);
+            const countData = await apiRequest(`/api/places/getTotalCount?places_region_id=${places_region_id}&type=${type}`, 'GET');
+            if(countData.success){
+                placesGetTotalCount = countData.total;
+            }
+        }
+
+        console.log(`총 데이터 개수: ${placesGetTotalCount}, 검색 필터: ${type}, 페이지: ${page}`);
+
+        let apiUrl = `/api/places/getPlaces?places_region_id=${places_region_id}&page=${page}&limit=${limit}`
+        if(type != "all"){
+            apiUrl += `&type=${type}`;
+        }
+
+        // 데이터 가져오기
+        const data = await apiRequest(apiUrl, 'GET');
+        if (data.success) {
+            console.log('data.places : ', data.places);
+            // 새로운 데이터를 기존 데이터에 추가
+            collectionPlaces = data.places;
+            // 데이터 목록 업데이트
             updatePlacesCollectionList();
+            updatePagination(page);
         }
     } catch (error) {
+        console.error(error);
         alert('장소 데이터 가져오는 중 오류가 발생했습니다.');
     }
 }
@@ -120,5 +166,18 @@ async function fetchFavorites(page = 1, limit = 10) {
         updateFavoriteList();
     } catch (error) {
         alert('즐겨찾기 데이터 가져오는 중 오류가 발생했습니다.');
+    }
+}
+
+// 이미 수집된 데이터 확인 API
+async function checkCollectedPlaces(placeIds) {
+    try {
+        const data = await apiRequest(`/api/places/check_collected`, 'POST', {place_ids : placeIds});
+        if(data.success) {
+            return data.collected.map((place) => place.place_id);
+        }
+    } catch(error) {
+        console.error('수집된 데이터 확인 중 오류 발생 : ', error.message);
+        return [];
     }
 }

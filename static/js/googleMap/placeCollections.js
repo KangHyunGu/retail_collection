@@ -1,7 +1,14 @@
 function updatePlacesCollectionList() {
-    const totalItems = collectionPlaces.length;
-    const itemsPerPage = 10
+    // 1. 기존 마커 제거
+    collectionMarkers.forEach(marker => marker.setMap(null));
+    collectionMarkers = [];
+
+    const totalItems = placesGetTotalCount;
+    const itemsPerPage = 50
     const totalPages = Math.ceil(totalItems / itemsPerPage)
+
+    const $dataList = $('#data-list');
+    $dataList.empty();
 
     if(currentPlaceListPage > totalPages || currentPlaceListPage < 1){
         return [];
@@ -9,14 +16,11 @@ function updatePlacesCollectionList() {
 
     const startIndex = (currentPlaceListPage - 1) * itemsPerPage
     let endIndex = Math.min(startIndex + itemsPerPage, collectionPlaces.length);
-
+    
     // 추가 조건: 데이터가 한 페이지에 다 들어올 경우
     if (collectionPlaces.length <= itemsPerPage) {
         endIndex = collectionPlaces.length;
     }
-
-    const $dataList = $('#data-list');
-    $dataList.empty();
 
     for(let idx = startIndex; idx < endIndex; idx++){
         const place_name = collectionPlaces[idx].place_name;
@@ -54,16 +58,88 @@ function updatePlacesCollectionList() {
     }
 }
 
+function updatePagination(page = 1) {
+    currentPage = page;
+    totalPages = Math.max(1, Math.ceil(placesGetTotalCount / placesGetLimit)); // 최소 1페이지 보장
+
+    const $pagination = $("#pagination");
+    $pagination.empty();
+
+    // 이전 버튼
+    if (currentPage > 1) {
+        $pagination.append(`
+            <button class="pagination-button" onclick="fetchCollectionPlaces(currentRegion.id, 'all', ${currentPage - 1})">이전</button>
+        `);
+    }
+
+    // 페이지 번호
+    for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) {
+        if (i === currentPage) {
+            $pagination.append(`
+                <button class="pagination-button active">${i}</button>
+            `);
+        } else {
+            $pagination.append(`
+                <button class="pagination-button" onclick="fetchCollectionPlaces(currentRegion.id, '${currentType}', ${i})">${i}</button>
+            `);
+        }
+    }
+
+    // 다음 버튼
+    if (currentPage < totalPages) {
+        $pagination.append(`
+            <button class="pagination-button" onclick="fetchCollectionPlaces(currentRegion.id, 'all', ${currentPage + 1})">다음</button>
+        `);
+    }
+}
+
+// Select Box 초기화(지역)
+async function initializeRegionSelect() {
+    const $regionSelect = $("#regionSelect");
+    
+    // 지역 데이터 가져오기
+    const data = await fetchRegions();
+    if(data.success){
+        // Select Box 옵션 추가
+        data.regions.forEach(region => {
+            const options = `<option value=${region.id}>${region.region_name}</option>`
+            $regionSelect.append(options);
+
+            // region 데이터 삽입
+            places_region.push(region);
+        })
+
+        // 첫 번째 항목 자동 선택
+        if (data.regions.length > 0) {
+            const firstRegionId = data.regions[0].id;
+            $regionSelect.val(firstRegionId); // 첫 번째 항목 선택
+            $regionSelect.trigger("change"); // 이벤트 트리거
+        }
+    } else {
+        console.error('지역 데이터 가져오기 실패 : ', data.message);
+    }
+}
+
 function processPlacesCreate(){
     const customDatas = [];
     const type = $("#placeType").val();
-    for(const marker of markers){
-        const customData = marker.customData;
+
+    // 이미 수집 된 목록 있으면 제외
+    const filterMarkers = markers.filter((marker) => !marker.customData.is_collected);
+    for(const marker of filterMarkers){
+        const customData = marker.customData;        
         const geometry_lat = customData.geometry_lat;
         const geometry_lng = customData.geometry_lng;
         const offsetData = calculateOffset(geometry_lat, geometry_lng);
+        delete customData.is_collected;
         customDatas.push({...customData, ...offsetData, type});
     }
+
+    if(!customDatas.length){
+        alert('이미 수집이 완료 된 장소들입니다.');
+        return;
+    }
+    
     createPlaceCollections(customDatas);
 }
 

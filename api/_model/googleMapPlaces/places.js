@@ -13,17 +13,52 @@ const places = {
         return row;
     },
 
-    async getPlaces(page, limit){
-        const sql = `SELECT PLA.*, 
-                            (SELECT type from ${TABLE.PLACES_TYPE} WHERE type = PLA.type) AS type,
-                            (SELECT type_name from ${TABLE.PLACES_TYPE} WHERE type = PLA.type) as type_name
-                     FROM ${TABLE.PLACES} PLA
-                     ORDER BY id DESC
-                     LIMIT ${page - 1}, ${page * limit}
-                     `;
+    async getTotalCount(regionId, type = 'all'){
+        const datas = {places_region_id: regionId};
+        const columns = ['COUNT(*) as total'];
+
+        if(type && type != 'all'){
+            datas["type"] = type;
+        }
+        const sql = sqlHelper.SelectSimple(TABLE.PLACES, datas, columns);
         const connection = await db;
-        const [row] = await connection.execute(sql);
+        const [row] = await connection.execute(sql.query, sql.values);
         return row;
+    },
+
+    async getPlaces(regionId, page, limit, type = "all") {
+        let query = `SELECT PLA.*, PT.type_name 
+                     FROM places PLA
+                     JOIN places_type PT ON PLA.type = PT.type
+                     WHERE PLA.places_region_id = ?`;
+    
+        const params = [regionId];
+    
+        if (type !== "all") {
+            query += " AND PLA.type = ?";
+            params.push(type);
+        }
+    
+        // ORDER BY, LIMIT, OFFSET 추가
+        const offset = (page - 1) * limit;
+        query += ` ORDER BY PLA.id DESC LIMIT ${limit} OFFSET ${offset}`;
+    
+        try {
+            const connection = await db;
+            const [rows] = await connection.execute(query, params);
+            return rows;
+        } catch (error) {
+            console.error("getPlaces Query Fail:", error.message);
+            throw error;
+        }
+    },
+
+    async checkCollectedPlaces(placeIds){
+        const placeHolders = placeIds.map(() => '?').join(',');
+        const query = `SELECT place_id FROM places WHERE place_id IN (${placeHolders})`;
+        const connection = await db;
+        const [rows] = await connection.execute(query, placeIds);
+        return rows;
     },
 
     async createPlaces(datas){
@@ -63,8 +98,8 @@ const places = {
        const sort = {id : false}
        const sql = sqlHelper.SelectSimpleLimit(TABLE.PLACES_FAV, page, limit, null, [], sort, [])
        const connection = await db;
-       const [row] = await connection.execute(sql.query)
-       return row;
+       const [rows] = await connection.execute(sql.query)
+       return rows;
     },
 
     async deleteFavorite(id){
@@ -128,12 +163,22 @@ const places = {
         ];
 
         const connection = await db;
-        const [row] = await connection.execute(sql, params);
-        return row;
+        const [rows] = await connection.execute(sql, params);
+        return rows;
     },
 
     async makeVcGpsLog(logData){
         const sql = sqlHelper.Insert(TABLE.VC_GPS_LOG, logData);
+        const connection = await db;
+        const [row] = await connection.execute(sql.query, sql.values);
+        return row;
+    },
+
+    async getRegions(){
+        const columns = ['id', 'region_name', 'geometry_lat', 
+                        'geometry_lng', 'offset_north_lat', 'offset_south_lat',
+                        'offset_east_lng', 'offset_west_lng'];
+        const sql = sqlHelper.SelectSimple(TABLE.PLACES_REGION, null, columns);
         const connection = await db;
         const [row] = await connection.execute(sql.query, sql.values);
         return row;

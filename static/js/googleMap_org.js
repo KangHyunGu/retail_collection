@@ -623,6 +623,7 @@ const createCircle = (lat, lng, radius) => {
         fillOpacity: 0.2,
         clickable: false, // 클릭 이벤트 차단 해제
     })
+
 }
 
 const clearMarkers = () => {
@@ -673,10 +674,7 @@ const performTextSearch = (query) => {
                 markers.push(marker);
                 $('#results').append(`<div><strong>${result.name}</strong><br>${result.formatted_address}</div>`);
             });
-           
-
-            console.log(pagination);
-
+    
             map.setCenter(results[0].geometry.location);
         } else {
             alert(`Text search failed: ${status}`);

@@ -27,6 +27,7 @@
         <select id="placeType">
             <option value="all">All</option>
             <option value="pharmacy">약국</option>
+            <option value="drugstore">드럭스토어</option>
             <option value="convenience_store">편의점</option>
             <option value="department_store">백화점</option>
             <option value="shopping_mall">대형몰</option>
@@ -84,9 +85,57 @@
      <!-- 오른쪽 사이드바 -->
      <div id="right-sidebar">
         <h3>수집된 데이터 목록</h3>
+
+        <!-- 지역 선택 Select Box -->
+        <div id="region-select-container">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <label for="regionSelect">지역</label>
+                <select id="regionSelect"></select>
+            </div>
+        </div>
+
         <ul id="data-list">
             <!-- 수집된 데이터가 여기에 동적으로 추가됩니다 -->
         </ul>
+
+        <!-- 페이징 네비게이션 -->
+        <div id="pagination">
+            <button id="prevPage" disabled>이전</button>
+            <span id="pageNumbers"></span>
+            <button id="nextPage">다음</button>
+        </div>
+
+        <!-- 필터 버튼 그룹 TODO: 추후 동적 구성 필요-->
+        <div id="filter-buttons">
+            <button class="filter-btn" data-type="pharmacy">
+                <img src="https://img.icons8.com/color-glass/50/pharmacy-shop.png" alt="약국">
+                약국
+            </button>
+            <button class="filter-btn" data-type="drugstore">
+                <img src="https://img.icons8.com/color/50/drugstore.png" alt="약국">
+                드럭스토어
+            </button>
+            <button class="filter-btn" data-type="convenience_store">
+                <img src="https://img.icons8.com/emoji/50/convenience-store.png" alt="편의점">
+                편의점
+            </button>
+            <button class="filter-btn" data-type="department_store">
+                <img src="https://img.icons8.com/emoji/50/department-store.png" alt="백화점">
+                백화점
+            </button>
+            <button class="filter-btn" data-type="shopping_mall">
+                <img src="https://img.icons8.com/fluency/50/shopping-mall.png" alt="대형몰">
+                대형몰
+            </button>
+            <button class="filter-btn" data-type="grocery_or_supermarket">
+                <img src="https://img.icons8.com/color/50/grocery-store.png" alt="대형마트">
+                대형마트
+            </button>
+            <button class="filter-btn" data-type="special">
+                <img src="https://img.icons8.com/color/50/marker-pen.png" alt="기타">
+                기타
+            </button>
+        </div>
     </div>
     
 

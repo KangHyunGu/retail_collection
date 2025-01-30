@@ -94,6 +94,30 @@ h1 {
     border-bottom: none;
 }
 
+/* 기본 리스트 스타일 */
+.result-item {
+    padding: 10px;
+    margin-bottom: 5px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* 리스트 항목 hover 효과 */
+.result-item:hover {
+    background-color: #f1f1f1;
+}
+
+/* 강조된 리스트 항목 (highlighted) */
+.result-item.highlighted {
+    background-color: #007bff; /* 파란 배경 */
+    color: #fff; /* 흰색 텍스트 */
+    font-weight: bold;
+    border-color: #0056b3; /* 진한 파란색 테두리 */
+}
+
 /* 팝업창 스타일 */
 #popup {
     display: none;
@@ -304,6 +328,7 @@ h1 {
     padding: 0;
     margin: 0;
     max-height: 50%; /* 최대 높이 설정 */
+    min-height: 30%; /* 최소 높이 설정 */
     overflow-y: auto; /* 스크롤바 표시 */
 }
 
@@ -351,6 +376,7 @@ h1 {
     margin: 0 0 10px;
     font-size: 18px;
     color: #333;
+    text-align: center;
 }
 
 #right-sidebar ul {
@@ -369,6 +395,12 @@ h1 {
 
 #right-sidebar ul li:hover {
     background-color: #f0f0f0;
+}
+
+#right-sidebar label{
+    display: inline-block;
+    font-weight: bold;
+    margin-right: 10px;
 }
 
 /* 타입 해시태그 스타일 */
@@ -393,4 +425,109 @@ h1 {
     background-size: contain;
     cursor: pointer;
     vertical-align: middle;
+}
+
+/* 지역 선택 Select Box 컨테이너 스타일 */
+#region-select-container {
+    margin-bottom: 10px; /* 아래와의 간격 */
+}
+
+#regionSelect {
+    width: calc(100% - 60px); /* 너비 조정 */
+    display: inline-block;
+    padding: 8px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #fff;
+    box-sizing: border-box; /* 테두리 포함 크기 계산 */
+}
+
+#regionSelect:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* 포커스 시 강조 */
+}
+
+/* 페이징 UI */
+#pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 10px;
+}
+
+/* 공통 스타일 */
+.pagination-button {
+    padding: 8px 12px;
+    margin: 0 5px;
+    border: 1px solid #ccc;
+    background-color: #f9f9f9;
+    color: #333;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.pagination-button:hover {
+    background-color: #007bff;
+    color: white;
+}
+
+/* 현재 페이지 강조 */
+.pagination-button.active {
+    background-color: #007bff; /* 강조 색상 */
+    color: white;
+    border-color: #007bff;
+    font-weight: bold;
+    cursor: default; /* 클릭 비활성화 */
+    pointer-events: none; /* 클릭 이벤트 비활성화 */
+}
+
+/* 타입별 필터링 제어 추가 */
+#filter-buttons {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3x3 그리드 */
+    gap: 15px;
+    padding: 15px;
+    justify-items: center;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.9);
+    border-top: 1px solid #ccc;
+}
+
+.filter-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 70px;
+    height: 70px;
+    border: 2px solid #ccc;
+    border-radius: 50%;
+    background: white;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+    transition: all 0.3s ease-in-out;
+}
+
+.filter-btn img {
+    width: 30px;
+    height: 30px;
+    margin-bottom: 5px;
+}
+
+/* 활성화된 버튼 스타일 */
+.filter-btn.active {
+    background: #007bff;
+    color: white;
+    border-color: #007bff;
+    box-shadow: 0px 0px 8px rgba(0, 123, 255, 0.5);
+}
+
+/* 호버 효과 */
+.filter-btn:hover {
+    border-color: #007bff;
+    transform: scale(1.1);
 }
