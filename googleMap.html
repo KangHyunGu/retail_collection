@@ -21,11 +21,10 @@
         <input type="text" id="keyword" placeholder="Enter keyword">
         <input type="number" id="radius" placeholder="Radius (meters)" value="500">
         <select id="searchType">
-            <option value="text">Text Search</option>
+            <!-- <option value="text">Text Search</option> -->
             <option value="nearby" selected>Nearby Search</option>
         </select>
         <select id="placeType">
-            <option value="all">All</option>
             <option value="pharmacy">약국</option>
             <option value="drugstore">드럭스토어</option>
             <option value="convenience_store">편의점</option>
@@ -37,6 +36,18 @@
         <button id="clear">초기화</button>
         <button id="goto">이동(위도, 경도)</button>
         <button id="dataColButton" disabled>데이터 수집</button>
+         <!--
+        <select id="vcLogs">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+        </select>
+        -->
     </div>
     
     <div id="map"></div>

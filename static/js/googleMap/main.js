@@ -142,6 +142,12 @@ $(document).ready(() => {
             fetchCollectionPlaces(currentRegion.id, selectedType, 1, 50);
         }
     });
+
+
+    $("#vcLogs").change(() => {
+        const areaName = $("#vcLogs").val();
+        fetchPlaceLogs(areaName);
+    })
 });
 
 function initsettings() {
@@ -161,7 +167,7 @@ function initsettings() {
             $.getScript(`https://maps.googleapis.com/maps/api/js?key=${data.apiKey}&libraries=places`)
             .done(() => {
                 // const geocoder = new google.maps.Geocoder();
-                // geocoder.geocode({ address: '다쓰노시' }, (results, status) => {
+                // geocoder.geocode({ address: '일본 효고현 히메지시' }, (results, status) => {
                 //     if (status === "OK") {
                 //         const bounds = results[0].geometry.bounds;
                 //         console.log(bounds);

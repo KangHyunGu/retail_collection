@@ -28,6 +28,8 @@ let currentRegionRectangle = null; // 현재 지역 경계를 저장할 변수
 
 let currentType = 'all';
 
+let places_vc_logs = [];
+
 // icon 관련 사이트
 // https://icons8.com
 const currentMapMarkerIcon = "https://img.icons8.com/ultraviolet/50/marker.png"; // 파란색 마커 아이콘

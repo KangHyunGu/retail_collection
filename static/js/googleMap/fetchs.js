@@ -76,24 +76,31 @@ async function createPlaceCollections(payload) {
 }
 
 // place Log VC용
-async function fetchPlaceLogs() {
+async function fetchPlaceLogs(areaName = 1) {
     try {
-        const areaName = 3;
         const data = await apiRequest(`/api/places/getPlaceLogs/${areaName}`, 'GET');
 
         const placeLogs = data.placeLogs;
+        places_vc_logs.forEach(log_marker => {
+            log_marker.setMap(null);
+        });
+
+        places_vc_logs = [];
+
         placeLogs.forEach((log) => {
             const markerOptions = {
                 position: { lat: log.geometry_lat, lng: log.geometry_lng },
                 map,
                 title: log.place_name,
                 icon: vcCheckIcon,
+                distance: log.distance.toFixed(2),
             };
 
             const marker = createMarker(markerOptions);
 
             // InfoWindow에 표시할 내용
             const infoWindowContent = `
+                <h3>${log.place_name}</h3>
                 <p>거리: ${log.distance.toFixed(2)} m</p>
                 <p>시간: ${formatTimestampCustom(log.time_stamp)}</p>
             `;
@@ -103,6 +110,8 @@ async function fetchPlaceLogs() {
             marker.addListener('click', () => {
                 infoWindow.open(map, marker);
             });
+
+            places_vc_logs.push(marker);
         });
     } catch (error) {
         console.error('장소 로그 가져오기 실패:', error.message);
