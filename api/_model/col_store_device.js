@@ -249,7 +249,7 @@ const colStoreDevice = {
         let isMatched = false;
         let storeId = 0;
 
-        if(matchRate >= 80){
+        if(matchRate >= 80 || (totalDevices >= 10 && matchRate >= 60)){
             storeId = matchResults[0]?.storeId || 0;
             console.log(`User is inside the store: ${storeId}`);
             isMatched = true

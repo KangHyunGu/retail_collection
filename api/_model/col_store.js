@@ -44,13 +44,41 @@ const colStore = {
                         ST_Distance_Sphere(location, ST_SRID(Point(?,?), 4326)) as distance
                  FROM ${TABLE.COL_STORE}
                  WHERE (parent_store_id IS NULL
-                   AND ST_Distance_Sphere(location, ST_SRID(Point(?,?), 4326)) <= ?)`
+                   AND ST_Distance_Sphere(location, ST_SRID(Point(?,?), 4326)) <= ?)
+                   ORDER BY distance ASC
+                   LIMIT 30`
           
         const connection = await db
         let [row] = await connection.execute(sql, [longitude, latitude, longitude, latitude, searchRedius])
         row = await catStoreCatCd.attachCategoryData(row);
         return row;
     },
+
+    async getNearByStoreWithBleDevices(latitude, longitude){
+        // 위도, 경도 값으로 반경 30M내 해당되는 매장 검색
+        const nearByStores = await this.getNearByStores(latitude, longitude)
+        
+        const ids = [];
+        for(const nearByStore of nearByStores){
+            ids.push(nearByStore.col_store_id);
+        }
+
+        const query = 
+        `SELECT col_store_device_mac_addr
+         FROM ${TABLE.COL_STORE_DEVICE}
+         WHERE col_store_id in (${new Array(ids.length).fill("?").join(",")})
+           AND col_store_device_type = 'BLE'
+         GROUP BY col_store_device_mac_addr
+        `
+        const connection = await db
+        let [row] = await connection.execute(query, ids)
+
+        return {
+                nearByColStores: nearByStores,
+                nearByColStoreDevices: row
+            }
+    },
+
 
     async removeStore(col_store_id, isParent){
         const connection = await db

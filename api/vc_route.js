@@ -81,6 +81,18 @@ router.get("/get_near_by_place/:latitude/:longitude", async(req, res) => {
   
 })
 
+router.get("/nearby/stores-devices/:latitude/:longitude", async(req, res) => {
+  const {latitude, longitude} = req.params;
+  try {
+    const results = await colStore.getNearByStoreWithBleDevices(latitude, longitude);
+    res.status(200).json(results)
+  } catch (error) {
+    console.error('modile vc nearByPlace server error : ', error);
+    res.status(500).json({success: false, message : 'modile vc nearByPlace server error'})
+  }
+  
+})
+
 router.post('/make_vc_gps_log', async(req, res) => {
    const logData = req.body;
    console.log('logData : ', logData);
