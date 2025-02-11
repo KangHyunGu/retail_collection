@@ -25,7 +25,7 @@ router.get('/spread', async(req, res) => {
                     csd.col_store_device_type,
                     csd.REG_DATE,
                     csd.col_store_device_scan_rate
-                FROM col_store cs join col_store_device csd
+                FROM col_store_bak_20250211 cs join col_store_device_bak_20250211 csd
                 ON cs.col_store_id = csd.col_store_id
                 WHERE cs.col_store_nm = ? AND csd.col_store_device_nm <> 'KangHyunGu'
                 ORDER BY csd.REG_DATE, csd.col_store_device_type, csd.col_store_device_nm, cs.col_store_id`;

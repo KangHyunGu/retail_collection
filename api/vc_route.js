@@ -28,19 +28,28 @@ router.post('/make_visitor', async (req, res) => {
 
       // //1.1 모바일에서 스캔한 데이터와 등록 된 기기 데이터를 비교처리
 
-      // // 1.WIFI 데이터를 비교 후 매장 출입 결정
-      // // 기준 : Wifi 데이터에 매칭여부
-      const test = colStoreDevice.detectStoreEntryInWifi(wifiScanDatas, rows);
-      console.log(test);
-      const storeId = parseInt(test.storeId)
+      // BLE 기기 비교 후 매장 출입 결정
+      // 기준 : BLE 데이터에 매칭여부
+      let detectStoreEntry = colStoreDevice.detectStoreEntry(bleScanDatas, rows);
+      let storeId = parseInt(detectStoreEntry.storeId)
       if(storeId != 0){
         const col_store = await colStore.getStore(storeId);
         responseData["visitStoreId"] = col_store[0].col_store_id || 0;
         responseData["visitStoreName"] = col_store[0].col_store_nm || "";
+        console.log('BLE : ', detectStoreEntry)
+      } else {
+        // BLE에서 매칭 실패했을경우
+        // WIFI 데이터를 비교 후 매장 출입 결정
+        // 기준 : Wifi 데이터에 매칭여부
+        detectStoreEntry = colStoreDevice.detectStoreEntry(wifiScanDatas, rows);
+        storeId = parseInt(detectStoreEntry.storeId)
+        console.log('WIFI : ', detectStoreEntry)
+        if(storeId != 0){
+          const col_store = await colStore.getStore(storeId);
+          responseData["visitStoreId"] = col_store[0].col_store_id || 0;
+          responseData["visitStoreName"] = col_store[0].col_store_nm || "";
+        }
       }
-
-      // 2. TODO: 위도, 경도 가지고 매장 매칭
-      // 블루투스 데이터를 매칭하여 신호(Rssi)가 가까운 쪽이면 해당 매장 내 진열대에 있다고 판단
     } catch (error) {
       console.error('Query Execution Error:', error);
     }

@@ -203,15 +203,15 @@ const colStoreDevice = {
     },
 
     // 매칭 로직
-    detectStoreEntryInWifi(wifiScanDatas, rows){
+    detectStoreEntry(ScanDatas, rows){
        // 1. 매장 데이터 그룹화 (상위 매장 및 MAC 주소 기준)
        const groupedData = this.groupByParentStoreAndMac(rows);
 
        // 2. 매칭 결과 저장
        const matchResults = [];
 
-       for(const wifiDevice of wifiScanDatas){
-        const {col_store_device_mac_addr} = wifiDevice;
+       for(const Scandevice of ScanDatas){
+        const {col_store_device_mac_addr} = Scandevice;
         let isMatched = false;
 
         //상위 매장 순회
@@ -219,47 +219,84 @@ const colStoreDevice = {
             // 해당 MAC 주소가 이 매장에 존재하는지 확인
             const matchedDevices = macGroups[col_store_device_mac_addr] || [];
 
-            // MAC 주소와 RSSI, 거리 비교
+            const threshold = 15; // 허용 차이 dBm
+
             const filteredDevices = matchedDevices.filter(device => {
-                if(wifiDevice.col_store_device_rssi >= device.col_store_device_rssi){
-                    // 스캔 된 RSSI가 수집 당시 RSSI보다 크면 매칭 
-                    return true;
-                }
-                return Math.abs(device.col_store_device_rssi - wifiDevice.col_store_device_rssi) <= 10;
+              // Scandevice.col_store_device_rssi: 스캔 시의 기준 RSSI (사무실 기준)
+              // device.col_store_device_rssi: 실제 기기에서 수집된 RSSI 값
+              const diff = Math.abs(Scandevice.col_store_device_rssi - device.col_store_device_rssi);
+              return diff <= threshold;
             });
 
             if (filteredDevices.length > 0) {
                 isMatched = true;
-                matchResults.push({ storeId, wifiDevice });
+                matchResults.push({ storeId, Scandevice });
                 break; // 한 매장과 매칭되면 다른 매장은 검사하지 않음
             }
 
             if (!isMatched) {
-                console.log(`No match found for device:`, wifiDevice);
+                console.log(`No match found for device:`, Scandevice);
             }
         }         
        }
 
-        // 3. 매칭률 계산
-        const totalDevices = wifiScanDatas.length;
-        const matchedDevices = matchResults.length;
-        console.log('totalDevices : ', totalDevices);
-        console.log('matchedDevices : ', matchedDevices);
-        const matchRate = (matchedDevices / totalDevices) * 100 || 0.0;
-        let isMatched = false;
-        let storeId = 0;
-
-        if(matchRate >= 80 || (totalDevices >= 10 && matchRate >= 60)){
-            storeId = matchResults[0]?.storeId || 0;
-            console.log(`User is inside the store: ${storeId}`);
-            isMatched = true
-        }
-
-        return {
-            isMatched,
-            storeId,
-            matchRate
-        }
+       const totalDevices = ScanDatas.length;
+       const matchedDevices = matchResults.length;
+       const matchRate = totalDevices > 0 ? (matchedDevices / totalDevices) * 100 : 0.0;
+       let isMatched = false;
+       let storeId = 0;
+       
+       switch (true) {
+         case (totalDevices >= 1 && totalDevices <= 3):
+           // 1~3개: 최소 1개 매칭
+           if (matchedDevices >= 1) {
+             isMatched = true;
+           }
+           break;
+       
+         case (totalDevices >= 4 && totalDevices <= 6):
+           // 4~6개: 최소 2개 매칭
+           if (matchedDevices >= 2) {
+             isMatched = true;
+           }
+           break;
+       
+         case (totalDevices >= 7 && totalDevices <= 10):
+           // 7~10개: 50% 매칭
+           if (matchRate >= 50) {
+             isMatched = true;
+           }
+           break;
+       
+         case (totalDevices >= 11 && totalDevices <= 14):
+           // 11~14개: 70% 매칭
+           if (matchRate >= 70) {
+             isMatched = true;
+           }
+           break;
+       
+         case (totalDevices >= 15):
+           // 15개 이상: 80% 매칭
+           if (matchRate >= 80) {
+             isMatched = true;
+           }
+           break;
+       
+         default:
+           // totalDevices가 0인 경우 등, 별도 처리할 수 있음
+           isMatched = false;
+       }
+       
+       if (isMatched) {
+         storeId = matchResults[0]?.storeId || 0;
+         console.log(`User is inside the store: ${storeId}`);
+       }
+       
+       return {
+         isMatched,
+         storeId,
+         matchRate
+       };
     },
 
     processScanData(scanDatas, rows){
