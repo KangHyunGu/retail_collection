@@ -211,35 +211,56 @@ function initsettings() {
                 fetchFavorites();
                 // 9. 임시 테스트용
                 fetchPlaceLogs();
+
+                // 창 크기가 변경될 때마다 함수 호출 (반응형 처리) (사이드바)
+                $(window).on('resize', adjustSidebarHeight);
             })
             
         }
     })
 }
 
-function adjustSidebarHeight (){
-    // 스트리트뷰 버튼 DOM 요소 선택
-    const $streetViewControl = $('.gmnoprint.gm-bundled-control');
+function adjustSidebarHeight() {
+    // 거리뷰 버튼과 전체화면 버튼 선택
+    const $streetViewControl = $('.gm-svpc');
+    const $fullscreenControl = $('.gm-control-active.gm-fullscreen-control');
 
-    if ($streetViewControl.length) {
-        // 스트리트뷰 버튼의 상단 위치 계산
+    console.log('Street View Button:', $streetViewControl);
+    console.log('Fullscreen Button:', $fullscreenControl);
+
+    if ($streetViewControl.length && $fullscreenControl.length) {
+        // 버튼 위치 계산
+        
         const streetViewTop = $streetViewControl.offset().top;
+        const fullscreenBottom = $fullscreenControl.offset().top + $fullscreenControl.outerHeight();
+
+        // 창 너비에 따른 반응형 조정
+        const windowWidth = $(window).width();
+        let sidebarWidth = '300px';
+        let rightPosition = '10px';
+
+        if (windowWidth < 768) {
+            sidebarWidth = '90%';   // 작은 화면에서는 너비를 90%로 변경
+            rightPosition = '5%';    // 오른쪽 여백을 5%로 설정
+        }
 
         // 사이드바 CSS 설정
         $('#right-sidebar').css({
-            top: '50px', // 상단 전체 맞춤
+            top: `${fullscreenBottom + 10}px`, // 전체화면 버튼 바로 아래
             bottom: `calc(100% - ${streetViewTop - 10}px)`, // 스트리트뷰 버튼 바로 위
-            height: 'auto', // 높이는 자동으로 조정
-            position: 'absolute',
-            right: '10px', // 오른쪽 위치
-            width: '300px' // 사이드바 너비
+            height: `calc(${streetViewTop - fullscreenBottom - 40}px)`, // 버튼 사이의 높이
+            position: 'fixed', // 화면에 고정
+            right: rightPosition, // 반응형에 따른 오른쪽 위치
+            width: sidebarWidth, // 반응형에 따른 너비
+            overflowY: 'auto'
         });
+    } else {
+        // 사이드바 초기 CSS
+        $('#right-sidebar').css({
+            top: '60px',
+            bottom: '200px',
+            height: 'auto'
+        })
     }
-
-    // 창 크기가 변경될 때 높이 재조정
-    $(window).resize(adjustSidebarHeight);
-
-    // 구글 맵이 로드되었을 때 높이 조정 (비동기 로딩 고려)
-    setTimeout(adjustSidebarHeight, 500); // 구글맵 로딩 완료 후 실행
- }
+}
 

@@ -1,534 +1,585 @@
 /* 전체 레이아웃 */
 body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    overflow: hidden;
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
 }
 
 h1 {
-    margin: 20px 0;
+  margin: 20px 0;
 }
 
 /* 검색바 및 컨트롤 영역 */
 #controls {
-    position: absolute;
-    top: 10px; /* 지도의 상단에 고정 */
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1000; /* 지도 위에 배치 */
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    padding: 10px;
-    background: rgba(255, 255, 255, 0.9); /* 투명 배경 */
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    align-items: center;
+  position: absolute;
+  top: 10px; /* 지도의 상단에 고정 */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000; /* 지도 위에 배치 */
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.9); /* 투명 배경 */
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  align-items: center;
 }
 
 #controls input, #controls select, #controls button {
-    padding: 10px;
-    font-size: 16px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    outline: none;
-    transition: all 0.2s;
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  outline: none;
+  transition: all 0.2s;
 }
 
 #controls input:focus, #controls select:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
 }
 
 #controls button {
-    background: #007bff;
-    color: white;
-    cursor: pointer;
+  background: #007bff;
+  color: white;
+  cursor: pointer;
 }
 
 #controls button:hover {
-    background: #0056b3;
+  background: #0056b3;
 }
 
 #controls button:disabled {
-    background: #aaa;
+  background: #aaa;
 }
 
 /* 지도 */
 #map {
-    position: absolute; /* 화면 전체를 덮음 */
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1; /* 검색바보다 뒤에 배치 */
-    margin: 0;
-    padding: 0;
+  position: absolute; /* 화면 전체를 덮음 */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1; /* 검색바보다 뒤에 배치 */
+  margin: 0;
+  padding: 0;
 }
-
 
 /* 결과 영역 */
 #results {
-    position: absolute;
-    bottom: 10px;
-    left: 10px;
-    width: 300px;
-    max-height: 200px;
-    overflow-y: auto;
-    background: rgba(255, 255, 255, 0.9); /* 투명 배경 */
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    padding: 10px;
-    z-index: 1000; /* 지도 위에 배치 */
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  width: 300px;
+  max-height: 200px;
+  overflow-y: auto;
+  background: rgba(255, 255, 255, 0.9); /* 투명 배경 */
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 10px;
+  z-index: 1000; /* 지도 위에 배치 */
 }
 
 #results div {
-    margin-bottom: 10px;
-    padding: 5px;
-    border-bottom: 1px solid #ddd;
+  margin-bottom: 10px;
+  padding: 5px;
+  border-bottom: 1px solid #ddd;
 }
 
 #results div:last-child {
-    border-bottom: none;
+  border-bottom: none;
 }
 
 /* 기본 리스트 스타일 */
 .result-item {
-    padding: 10px;
-    margin-bottom: 5px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    background-color: #f9f9f9;
-    cursor: pointer;
-    transition: background-color 0.3s ease, color 0.3s ease;
+  padding: 10px;
+  margin-bottom: 5px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* 리스트 항목 hover 효과 */
 .result-item:hover {
-    background-color: #f1f1f1;
+  background-color: #f1f1f1;
 }
 
 /* 강조된 리스트 항목 (highlighted) */
 .result-item.highlighted {
-    background-color: #007bff; /* 파란 배경 */
-    color: #fff; /* 흰색 텍스트 */
-    font-weight: bold;
-    border-color: #0056b3; /* 진한 파란색 테두리 */
+  background-color: #007bff; /* 파란 배경 */
+  color: #fff; /* 흰색 텍스트 */
+  font-weight: bold;
+  border-color: #0056b3; /* 진한 파란색 테두리 */
 }
 
 /* 팝업창 스타일 */
 #popup {
-    display: none;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 1000;
-    width: 300px;
-    padding: 20px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    background: white;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  width: 300px;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background: white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 #popup input {
-    width: 95%;
-    padding: 10px;
-    margin-bottom: 10px;
-    font-size: 16px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+  width: 95%;
+  padding: 10px;
+  margin-bottom: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
 }
 
 #popup button {
-    width: 48%;
-    padding: 10px;
-    font-size: 16px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
+  width: 48%;
+  padding: 10px;
+  font-size: 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
 }
 
 #popup .confirm {
-    background-color: #007bff;
-    color: white;
+  background-color: #007bff;
+  color: white;
 }
 
 #popup .cancel {
-    background-color: #ccc;
+  background-color: #ccc;
 }
 
 #popup .confirm:hover {
-    background-color: #0056b3;
+  background-color: #0056b3;
 }
 
 #popup .cancel:hover {
-    background-color: #aaa;
+  background-color: #aaa;
 }
 
 #overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 999;
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
 }
 
 /* 즐겨찾기 팝업 */
 #favorite-popup {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: white;
-    border: 1px solid #ccc;
-    border-radius: 10px;
-    padding: 20px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    width: 300px;
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  width: 300px;
 }
-
 
 #favorite-popup input,
 #favorite-popup textarea {
-    width: 100%;
-    padding: 10px;
-    margin-top: 5px;
-    margin-bottom: 15px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    box-sizing: border-box;
-    font-size: 14px;
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  margin-bottom: 15px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  box-sizing: border-box;
+  font-size: 14px;
 }
 
 #favorite-popup button {
-    width: 48%;
-    padding: 10px;
-    font-size: 14px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
+  width: 48%;
+  padding: 10px;
+  font-size: 14px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
 }
 
 #favorite-popup button#save-favorite {
-    background: #007bff;
-    color: white;
+  background: #007bff;
+  color: white;
 }
 
 #favorite-popup button#save-favorite:hover {
-    background: #0056b3;
+  background: #0056b3;
 }
 
 #favorite-popup button#cancel-favorite {
-    background: #ccc;
-    color: black;
+  background: #ccc;
+  color: black;
 }
 
 #favorite-popup button#cancel-favorite:hover {
-    background: #aaa;
+  background: #aaa;
 }
 
 #favorite-list {
-    position: fixed;
-    top: 50px;
-    width: 300px;
-    margin: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    background-color: #f9f9f9;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
-    overflow-y: auto;
-    max-height: 400px; /* 화면 크기에 맞춰 높이 제한 */
-    padding: 10px;
+  position: fixed;
+  top: 50px;
+  width: 300px;
+  margin: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  overflow-y: auto;
+  max-height: 400px; /* 화면 크기에 맞춰 높이 제한 */
+  padding: 10px;
 }
 
 #favorite-items li {
-    position: relative;
-    display: flex;
-    justify-content: space-between; /* 텍스트와 삭제 버튼을 양 끝 배치 */
-    align-items: center;
-    margin-bottom: 5px;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 3px;
-    background-color: #ffffff;
-    transition: background-color 0.2s ease;
+  position: relative;
+  display: flex;
+  justify-content: space-between; /* 텍스트와 삭제 버튼을 양 끝 배치 */
+  align-items: center;
+  margin-bottom: 5px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  background-color: #ffffff;
+  transition: background-color 0.2s ease;
 }
 
 #favorite-items li:hover {
-    background-color: #f0f0f0;
+  background-color: #f0f0f0;
 }
 
 .favorite-item-title {
-    font-weight: bold;
-    color: #007bff;
-    cursor: pointer;
-    text-decoration: none;
-    flex-grow: 1;
+  font-weight: bold;
+  color: #007bff;
+  cursor: pointer;
+  text-decoration: none;
+  flex-grow: 1;
 }
 
 .favorite-item-content {
-    margin-top: 5px;
-    color: #333;
-    font-size: 14px;
+  margin-top: 5px;
+  color: #333;
+  font-size: 14px;
 }
 
 .delete-icon {
-    font-size: 16px;
-    color: red;
-    cursor: pointer;
-    margin-left: 10px;
-    transition: transform 0.2s, color 0.2s;
+  font-size: 16px;
+  color: red;
+  cursor: pointer;
+  margin-left: 10px;
+  transition: transform 0.2s, color 0.2s;
 }
 
 .delete-icon:hover {
-    color: darkred;
-    transform: scale(1.2);
+  color: darkred;
+  transform: scale(1.2);
 }
 
 /* 컨텍스트 메뉴 */
 #context-menu {
-    position: absolute;
-    z-index: 1000;
-    background: white;
-    border: 1px solid #ccc;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    padding: 10px;
-    border-radius: 5px;
-    display: none;
+  position: absolute;
+  z-index: 1000;
+  background: white;
+  border: 1px solid #ccc;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  border-radius: 5px;
+  display: none;
 }
 
 /* 오른쪽 사이드바 */
 #right-sidebar {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    right: 0;
-    width: 300px;
-    background: rgba(255, 255, 255, 0.9);
-    border-left: 1px solid #ccc;
-    padding: 10px;
-    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
-    overflow-y: auto;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 300px;
+  background: rgba(255, 255, 255, 0.9);
+  border-left: 1px solid #ccc;
+  padding: 10px;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  overflow-y: auto;
 }
 
 /* 데이터 목록 스타일 */
 #right-sidebar ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    max-height: 50%; /* 최대 높이 설정 */
-    min-height: 30%; /* 최소 높이 설정 */
-    overflow-y: auto; /* 스크롤바 표시 */
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 50%; /* 최대 높이 설정 */
+  min-height: 30%; /* 최소 높이 설정 */
+  overflow-y: auto; /* 스크롤바 표시 */
 }
 
 #right-sidebar ul li {
-    display: flex; /* Flexbox로 정렬 */
-    justify-content: space-between; /* 양 끝에 배치 */
-    align-items: center; /* 수직 정렬 */
-    padding: 10px 0;
-    border-bottom: 1px solid #ddd;
-    font-size: 14px;
-    color: #333;
+  display: flex; /* Flexbox로 정렬 */
+  justify-content: space-between; /* 양 끝에 배치 */
+  align-items: center; /* 수직 정렬 */
+  padding: 10px 0;
+  border-bottom: 1px solid #ddd;
+  font-size: 14px;
+  color: #333;
 }
 
-
 #right-sidebar ul li:last-child {
-    border-bottom: none;
+  border-bottom: none;
 }
 
 /* 화살표 버튼 */
 #toggle-button {
-    position: absolute;
-    top: 50%;
-    right: 300px; /* 사이드바 너비와 동일하게 설정 */
-    width: 30px;
-    height: 30px;
-    background: #007bff;
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    z-index: 1001;
-    transform: translateY(-50%);
-    transition: right 0.3s ease;
+  position: absolute;
+  top: 50%;
+  right: 300px; /* 사이드바 너비와 동일하게 설정 */
+  width: 30px;
+  height: 30px;
+  background: #007bff;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  z-index: 1001;
+  transform: translateY(-50%);
+  transition: right 0.3s ease;
 }
 
 #toggle-button:hover {
-    background: #0056b3;
+  background: #0056b3;
 }
 
-
 #right-sidebar h3 {
-    margin: 0 0 10px;
-    font-size: 18px;
-    color: #333;
-    text-align: center;
+  margin: 0 0 10px;
+  font-size: 18px;
+  color: #333;
+  text-align: center;
 }
 
 #right-sidebar ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
 #right-sidebar ul li {
-    padding: 10px;
-    border-bottom: 1px solid #ddd;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 
 #right-sidebar ul li:hover {
-    background-color: #f0f0f0;
+  background-color: #f0f0f0;
 }
 
-#right-sidebar label{
-    display: inline-block;
-    font-weight: bold;
-    margin-right: 10px;
+#right-sidebar label {
+  display: inline-block;
+  font-weight: bold;
+  margin-right: 10px;
 }
 
 /* 타입 해시태그 스타일 */
 .type-label {
-    padding: 2px 6px;
-    font-size: 12px; /* 글씨 크기 줄임 */
-    color: #FF9436; /* 검정색 또는 어두운 회색 */
-    background-color: #f0f0f0; /* 연한 회색 배경 */
-    border-radius: 12px; /* 둥근 박스 */
-    margin-left: 10px;
-    white-space: nowrap; /* 텍스트 줄바꿈 방지 */
+  padding: 2px 6px;
+  font-size: 12px;
+  color: #FF9436;
+  background-color: #f0f0f0;
+  border-radius: 12px;
+  margin-left: 10px;
+  white-space: nowrap;
 }
-
 
 /* 상세정보 버튼 */
 .info-icon {
-    display: inline-block;
-    width: 16px;
-    height: 16px;
-    margin-left: 10px;
-    background: url('https://img.icons8.com/ios-filled/50/000000/info.png') no-repeat center center;
-    background-size: contain;
-    cursor: pointer;
-    vertical-align: middle;
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin-left: 10px;
+  background: url('https://img.icons8.com/ios-filled/50/000000/info.png') no-repeat center center;
+  background-size: contain;
+  cursor: pointer;
+  vertical-align: middle;
 }
 
 /* 지역 선택 Select Box 컨테이너 스타일 */
 #region-select-container {
-    margin-bottom: 10px; /* 아래와의 간격 */
+  margin-bottom: 10px;
 }
 
 #regionSelect {
-    width: calc(100% - 60px); /* 너비 조정 */
-    display: inline-block;
-    padding: 8px;
-    font-size: 14px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    background-color: #fff;
-    box-sizing: border-box; /* 테두리 포함 크기 계산 */
+  width: calc(100% - 60px);
+  display: inline-block;
+  padding: 8px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #fff;
+  box-sizing: border-box;
 }
 
 #regionSelect:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* 포커스 시 강조 */
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
 }
 
 /* 페이징 UI */
 #pagination {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-top: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 10px;
 }
 
-/* 공통 스타일 */
 .pagination-button {
-    padding: 8px 12px;
-    margin: 0 5px;
-    border: 1px solid #ccc;
-    background-color: #f9f9f9;
-    color: #333;
-    cursor: pointer;
-    border-radius: 4px;
-    transition: background-color 0.3s, color 0.3s;
+  padding: 8px 12px;
+  margin: 0 5px;
+  border: 1px solid #ccc;
+  background-color: #f9f9f9;
+  color: #333;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.3s, color 0.3s;
 }
 
 .pagination-button:hover {
-    background-color: #007bff;
-    color: white;
+  background-color: #007bff;
+  color: white;
 }
-
-/* 현재 페이지 강조 */
+/* 현재 페이지 강조(사이드바) */
 .pagination-button.active {
-    background-color: #007bff; /* 강조 색상 */
-    color: white;
-    border-color: #007bff;
-    font-weight: bold;
-    cursor: default; /* 클릭 비활성화 */
-    pointer-events: none; /* 클릭 이벤트 비활성화 */
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+  font-weight: bold;
+  cursor: default;
+  pointer-events: none;
 }
 
 /* 타입별 필터링 제어 추가 */
 #filter-buttons {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 3x3 그리드 */
-    gap: 15px;
-    padding: 15px;
-    justify-items: center;
-    align-items: center;
-    background: rgba(255, 255, 255, 0.9);
-    border-top: 1px solid #ccc;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  padding: 15px;
+  justify-items: center;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.9);
+  border-top: 1px solid #ccc;
 }
 
 .filter-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 70px;
-    height: 70px;
-    border: 2px solid #ccc;
-    border-radius: 50%;
-    background: white;
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: bold;
-    text-align: center;
-    transition: all 0.3s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 70px;
+  height: 70px;
+  border: 2px solid #ccc;
+  border-radius: 50%;
+  background: white;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  text-align: center;
+  transition: all 0.3s ease-in-out;
 }
 
 .filter-btn img {
-    width: 30px;
-    height: 30px;
-    margin-bottom: 5px;
+  width: 30px;
+  height: 30px;
+  margin-bottom: 5px;
 }
-
 /* 활성화된 버튼 스타일 */
 .filter-btn.active {
-    background: #007bff;
-    color: white;
-    border-color: #007bff;
-    box-shadow: 0px 0px 8px rgba(0, 123, 255, 0.5);
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
+  box-shadow: 0px 0px 8px rgba(0, 123, 255, 0.5);
 }
-
 /* 호버 효과 */
 .filter-btn:hover {
-    border-color: #007bff;
-    transform: scale(1.1);
+  border-color: #007bff;
+  transform: scale(1.1);
+}
+
+/* ========== 미디어 쿼리: 화면 너비 768px 이하 ========== */
+@media screen and (max-width: 768px) {
+  /* 컨트롤 영역: 좌우 여백 확보, 중앙정렬 해제 */
+  #controls {
+      top: 5px;
+      left: 5%;
+      transform: none;
+      width: 90%;
+      padding: 8px;
+  }
+
+  /* 결과 영역: 폭을 화면에 맞게 조절 */
+  #results {
+      width: calc(100% - 20px);
+      bottom: 5px;
+      left: 10px;
+  }
+
+  /* 팝업 및 즐겨찾기 팝업: 폭을 유동적으로 변경 */
+  #popup,
+  #favorite-popup {
+      width: 90%;
+  }
+
+  /* 즐겨찾기 리스트: 폭 및 위치 조정 */
+  #favorite-list {
+      width: 90%;
+      left: 5%;
+      top: 60px;
+  }
+
+  /* 오른쪽 사이드바: 폭 축소 및 toggle 버튼 위치 조정 */
+  #right-sidebar {
+      width: 80%;
+      right: 0;
+  }
+
+  #toggle-button {
+      right: 80%;
+  }
+}
+
+/* ========== 미디어 쿼리: 화면 너비 480px 이하 ========== */
+@media screen and (max-width: 480px) {
+  /* 컨트롤 영역: 폰트 및 패딩 축소 */
+  #controls input, #controls select, #controls button {
+      padding: 8px;
+      font-size: 14px;
+  }
+
+  /* 사이드바 및 toggle 버튼 숨기기 또는 간략화 (원하는 경우) */
+  #right-sidebar {
+      display: none;
+  }
+  
+  #toggle-button {
+      display: none;
+  }
 }
