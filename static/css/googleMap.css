@@ -75,13 +75,14 @@ h1 {
   bottom: 10px;
   left: 10px;
   width: 300px;
-  max-height: 200px;
+  max-height: 330px;
   overflow-y: auto;
   background: rgba(255, 255, 255, 0.9); /* 투명 배경 */
   border: 1px solid #ccc;
   border-radius: 5px;
   padding: 10px;
   z-index: 1000; /* 지도 위에 배치 */
+  counter-reset: result-counter;
 }
 
 #results div {
@@ -116,6 +117,15 @@ h1 {
   color: #fff; /* 흰색 텍스트 */
   font-weight: bold;
   border-color: #0056b3; /* 진한 파란색 테두리 */
+}
+
+/* 검색 결과 항목 앞에 순번 추가 */
+#results .result-item::before {
+  counter-increment: result-counter;
+  content: counter(result-counter) ". ";
+  font-weight: bold;
+  color: #007bff;
+  margin-right: 5px;
 }
 
 /* 팝업창 스타일 */
@@ -583,3 +593,5 @@ h1 {
       display: none;
   }
 }
+
+

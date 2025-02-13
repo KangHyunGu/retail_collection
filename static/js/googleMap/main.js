@@ -17,6 +17,16 @@ $(document).ready(() => {
         isSidebarVisible = !isSidebarVisible;
     });
 
+
+    $('#radius').on('input', function() {
+        if(!currentMapMarker) return;
+        const location = currentMapMarker?.position;
+        const lat = location.lat();
+        const lng = location.lng();
+        const radius = Number($(this).val()) || 1;
+        createCircle(lat, lng, radius);
+    })
+
   
     $('#searchButton').click(() => {
         const searchType = $("#searchType").val();
@@ -94,11 +104,13 @@ $(document).ready(() => {
         // 선택 된 마커 제거
         if(currentMapMarker != null){
             currentMapMarker.setMap(null);
+            currentMapMarker = null;
         }   
 
         // circle 제거
         if(circle != null){
             circle.setMap(null);
+            circle = null;
         }
 
         // 결과 marker 제거
@@ -115,6 +127,14 @@ $(document).ready(() => {
         currentRegion = places_region.find((item) => item.id == selectedRegionId);
         
         drawRegionBounds(currentRegion);
+
+        if(currentMapMarker){
+            currentMapMarker.setMap(null);
+            currentMapMarker = null;
+        }
+
+        // 검색 된 리스트 제거
+        $('#results').html('');
 
         // 기존 활성화된 필터 버튼 해제
         $("#filter-buttons .filter-btn").removeClass("active");

@@ -18,10 +18,12 @@
 <body>
     <h1>Google Places API Search</h1>
     <div id="controls">
-       <span>반경조정</span> <input type="number" id="radius" placeholder="Radius (meters)" value="500">
+        <!-- <input type="text" id="keyword" placeholder="Enter keyword"> -->
+    
+       <span>반경조정</span> <input type="number" id="radius" placeholder="Radius (meters)" value="500" min="1" max="10000">
        <span>검색종류</span> <select id="searchType">
           <!-- <option value="text">Text Search</option>  -->
-            <option value="nearby" selected>Nearby Search</option>
+          <option value="nearby" selected>Nearby Search</option>
         </select>
         <span>매장검색타입</span> <select id="placeType">
             <option value="pharmacy">약국</option>
@@ -36,7 +38,7 @@
         <button id="goto">이동(위도, 경도)</button>
         <button id="dataColButton" disabled>데이터 수집</button>
        
-         <select id="vcLogs">
+         <!-- <select id="vcLogs">
             <option value="1">1</option>
             <option value="2">2</option>
             <option value="3">3</option>
@@ -53,7 +55,7 @@
             <option value="14">14</option>
             <option value="15">15</option>
             <option value="16">16</option>
-        </select> 
+        </select>  -->
         
     </div>
     

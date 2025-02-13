@@ -45,7 +45,7 @@ const sqlHelper = {
     SelectSimpleLimit(table, page, limit, data = null, cols = [], sort = null, group = []){
         let {query, values} = this.SelectSimple(table, data, cols, sort, group)
         const start = page || (page - 1) * limit
-        let limitSql = ` LIMIT ${start},${limit}`
+        let limitSql = ` LIMIT ${start - 1},${limit - 1}`
         query = `${query} ${limitSql}`
         return {query, values}
     },
