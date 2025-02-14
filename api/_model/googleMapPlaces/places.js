@@ -1,4 +1,5 @@
 const db = require('../../../plugins/mysql');
+const connection = db();
 const sqlHelper = require('../../../utils/sqlHelper');
 const TABLE = require('../../../utils/TABLE');
 const utils = require('../../../utils/utils');
@@ -8,7 +9,6 @@ const places = {
     // place log 가져오기 임시 테스트용
     async getPlaceLogs(area_name){
         const sql = sqlHelper.SelectSimple(TABLE.VC_GPS_LOG, {area_name});
-        const connection = await db;
         const [row] = await connection.execute(sql.query, sql.values);
         return row;
     },
@@ -21,7 +21,6 @@ const places = {
             datas["type"] = type;
         }
         const sql = sqlHelper.SelectSimple(TABLE.PLACES, datas, columns);
-        const connection = await db;
         const [row] = await connection.execute(sql.query, sql.values);
         return row;
     },
@@ -44,7 +43,6 @@ const places = {
         query += ` ORDER BY PLA.id DESC LIMIT ${limit} OFFSET ${offset}`;
     
         try {
-            const connection = await db;
             const [rows] = await connection.execute(query, params);
             return rows;
         } catch (error) {
@@ -56,7 +54,6 @@ const places = {
     async checkCollectedPlaces(placeIds){
         const placeHolders = placeIds.map(() => '?').join(',');
         const query = `SELECT place_id FROM places WHERE place_id IN (${placeHolders})`;
-        const connection = await db;
         const [rows] = await connection.execute(query, placeIds);
         return rows;
     },
@@ -69,7 +66,6 @@ const places = {
         }
 
         const sql = sqlHelper.InsertArray(TABLE.PLACES, datas);
-        const connection = await db;
         const [row] = await connection.execute(sql.query, sql.values);
 
 
@@ -89,7 +85,6 @@ const places = {
 
     async createFavorite(place_fav_data){
         const sql = sqlHelper.Insert(TABLE.PLACES_FAV, place_fav_data);
-        const connection = await db;
         const [row] = await connection.execute(sql.query, sql.values);
         return row;
     },
@@ -97,14 +92,12 @@ const places = {
     async getFavorites(page, limit){
        const sort = {id : false}
        const sql = sqlHelper.SelectSimpleLimit(TABLE.PLACES_FAV, page, limit, null, [], sort, [])
-       const connection = await db;
        const [rows] = await connection.execute(sql.query)
        return rows;
     },
 
     async deleteFavorite(id){
         const sql = sqlHelper.DeleteSimple(TABLE.PLACES_FAV, {id});
-        const connection = await db;
         const [row] = await connection.execute(sql.query, sql.values);
         return row;
     },
@@ -162,14 +155,12 @@ const places = {
             radius, // 반경 100m 조건
         ];
 
-        const connection = await db;
         const [rows] = await connection.execute(sql, params);
         return rows;
     },
 
     async makeVcGpsLog(logData){
         const sql = sqlHelper.Insert(TABLE.VC_GPS_LOG, logData);
-        const connection = await db;
         const [row] = await connection.execute(sql.query, sql.values);
         return row;
     },
@@ -179,7 +170,6 @@ const places = {
                         'geometry_lng', 'offset_north_lat', 'offset_south_lat',
                         'offset_east_lng', 'offset_west_lng'];
         const sql = sqlHelper.SelectSimple(TABLE.PLACES_REGION, null, columns);
-        const connection = await db;
         const [row] = await connection.execute(sql.query, sql.values);
         return row;
     }

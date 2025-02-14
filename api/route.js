@@ -1,5 +1,6 @@
 const express = require('express');
-const db = require('../plugins/mysql')
+const db = require('../plugins/mysql');
+const connection = db();
 const router = express.Router();
 const colStoreCatCd = require('./_model/col_store_cat_cd')
 const colStore = require('./_model/col_store');
@@ -28,8 +29,7 @@ router.get('/spread', async(req, res) => {
                 FROM col_store_bak_20250211 cs join col_store_device_bak_20250211 csd
                 ON cs.col_store_id = csd.col_store_id
                 WHERE cs.col_store_nm = ? AND csd.col_store_device_nm <> 'KangHyunGu'
-                ORDER BY csd.REG_DATE, csd.col_store_device_type, csd.col_store_device_nm, cs.col_store_id`;
-    const connection = await db;            
+                ORDER BY csd.REG_DATE, csd.col_store_device_type, csd.col_store_device_nm, cs.col_store_id`;         
     const [row] = await connection.execute(sql, [store]);
     res.json(row);
 })
@@ -77,7 +77,7 @@ router.get("/cat_codes", async(req, res) => {
 })
 
 router.post("/add_data_collection", async (req, res) => {
-    let connection;
+
 
     try {
         const colStoreData = req.body.colStore;
@@ -93,8 +93,7 @@ router.post("/add_data_collection", async (req, res) => {
        let target_store_id = await colStoreDevice.getDeviceFindStoreId(colDeviceData)
        const insertData = targetDeviceData.insertData
        const updateData = targetDeviceData.updateData
-      
-       connection = await db;
+    
        // 트랜잭션 시작
        await connection.beginTransaction();
         
@@ -150,7 +149,7 @@ router.post("/add_data_collection", async (req, res) => {
 // col_store 및 col_store_devices 데이터 수집 처리
 router.post("/add_store_collection", async (req, res) => {
     console.log('API call: add_store_collection');
-    let connection;
+    let transactionConn = await db().getConnection()
     let storeInsertCnt = 0;
     let devicesInsertCnt = 0;
     let devicesUwbInsertCnt = 0;
@@ -158,16 +157,13 @@ router.post("/add_store_collection", async (req, res) => {
     let colStoreDevicesData = [];
 
     try {
-        // 풀에서 연결을 가져옴
-        connection = await db
-
         // 트랜잭션 시작
-        await connection.beginTransaction();
+        await transactionConn.beginTransaction();
 
         // col_store 데이터 수집 처리
         const colStoreData = req.body.colStore;
         colStoreData['location'] = `ST_SRID(Point(${colStoreData.col_store_loc_lot},${colStoreData.col_store_loc_lat}), 4326)`;
-        const storeResults = await colStore.addStoreCollection(colStoreData);
+        const storeResults = await colStore.addStoreCollection(colStoreData, transactionConn);
         const storeInsertId = storeResults.insertId;
         storeInsertCnt = storeResults.affectedRows;
 
@@ -191,17 +187,17 @@ router.post("/add_store_collection", async (req, res) => {
             // 일부러 예외 발생 (테스트용)
             //throw new Error('Intentional error to trigger rollback');
 
-            const devicesResult = await colStoreDevice.addStoreDevicesCollection(colStoreDevicesData);
+            const devicesResult = await colStoreDevice.addStoreDevicesCollection(colStoreDevicesData, transactionConn);
             devicesInsertCnt = devicesResult.affectedRows;
 
             if (devicesInsertCnt > 0 && col_store_device_uwb.length) {
                 // UWB Distance 정보 insert 처리
-                devicesUwbInsertCnt += await colStoreDeviceUwb.addStoreDevicesUwbInfo(storeInsertId, col_store_device_uwb);
+                devicesUwbInsertCnt += await colStoreDeviceUwb.addStoreDevicesUwbInfo(storeInsertId, col_store_device_uwb, transactionConn);
             }
         }
 
         // 트랜잭션 커밋
-        await connection.commit();
+        await transactionConn.commit();
         console.log('Transaction committed successfully');
 
         // 응답 반환
@@ -212,9 +208,10 @@ router.post("/add_store_collection", async (req, res) => {
         );
 
     } catch (err) {
-        if (connection) {
+        console.log('err')
+        if (transactionConn) {
             // 오류가 발생하면 롤백
-            await connection.rollback();
+            await transactionConn.rollback();
             console.error('Transaction rolled back due to error:', err);
         }
 
@@ -224,7 +221,7 @@ router.post("/add_store_collection", async (req, res) => {
     } finally {
         if (connection) {
             // 연결 반환
-            await connection.release();
+            await transactionConn.release();
         }
     }
 });

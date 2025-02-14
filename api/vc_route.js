@@ -1,6 +1,4 @@
 const express = require('express');
-const db = require('../plugins/mysql');
-const TABLE = require('../utils/TABLE');
 const router = express.Router();
 const vcCustomer = require('./_model/vc/vc_customer');
 const colStoreDevice = require('./_model/col_store_device')

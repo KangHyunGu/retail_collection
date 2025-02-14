@@ -1,14 +1,16 @@
 const db = require('../../plugins/mysql');
+const connection = db();
 const TABLE = require('../../utils/TABLE');
 const sqlHelper = require("../../utils/sqlHelper")
 const moment = require('../../utils/moment');
 
 const colStoreDevice = {
 
-    async addStoreDevicesCollection(devicesData){
+    async addStoreDevicesCollection(devicesData, transactionConn = null){
+        // 트랜잭션 사용
+        let conn = transactionConn ? transactionConn : connection;
         const sql = sqlHelper.InsertArray(TABLE.COL_STORE_DEVICE, devicesData);
-        const connection = await db
-        const [row] = await connection.execute(sql.query, sql.values);
+        const [row] = await conn.execute(sql.query, sql.values);
         return row;
     },
 
@@ -20,7 +22,6 @@ const colStoreDevice = {
         const fixedColumns = [{name : 'col_store_id', value: devicesData[0].col_store_id}];
         const sql = sqlHelper.generateCaseWhenUpdate(table, data, idColumn, caseColumns, fixedColumns);
         
-        const connection = await db;
         const [row] = await connection.execute(sql.query, sql.values);
         
         return row;
@@ -39,8 +40,7 @@ const colStoreDevice = {
         const sql = `SELECT *, 
                     (select parent_store_id from col_store where col_store_id = csd.col_store_id) as parent_store_id 
                     FROM ${TABLE.COL_STORE_DEVICE} csd WHERE col_store_device_mac_addr IN (${tokens})`;
-        console.log(sql);
-        const connection = await db;
+
         const [rows] = await connection.execute(sql, devicesMacInfos);
         return rows;
     },
@@ -92,7 +92,6 @@ const colStoreDevice = {
                      WHERE col_store_device_mac_addr IN (${tokens})
                      GROUP BY col_store_id`;
     
-        const connection = await db;
         const [rows] = await connection.execute(sql, devicesMacInfos);
 
          // 수집된 기기들을 매핑하여 가장 빈도가 높은 col_store_id를 도출.
@@ -113,7 +112,6 @@ const colStoreDevice = {
     async getDeviceList(col_store_id){
         //colStoreDevice
         let sql = sqlHelper.SelectSimple(TABLE.COL_STORE_DEVICE, {col_store_id});
-        const connection = await db
         const [row] = await connection.execute(sql.query, sql.values)
         
         //colStoreUwb
@@ -135,7 +133,6 @@ const colStoreDevice = {
     async removeDevices(col_store_id, isParent){
         // uwb Ranging 정보가 있다면 Ranging부터 제거
         // TODO: col_store의 하위로 연결 된 매장 있다면 그부분부터 제거
-        const connection = await db;
 
         // 기본 DELETE 쿼리
         let deleteUwbDeviceSql = `
@@ -299,11 +296,10 @@ const colStoreDevice = {
        };
     },
 
-    processScanData(scanDatas, rows){
-        const groupedStores = groupByStore(rows); // 매장 그룹화
-        console.log('groupedStores : ', groupedStores);
-    }
-
+    // processScanData(scanDatas, rows){
+    //     const groupedStores = groupByStore(rows); // 매장 그룹화
+    //     console.log('groupedStores : ', groupedStores);
+    // }
 
 }
 

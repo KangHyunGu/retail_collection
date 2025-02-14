@@ -1,4 +1,5 @@
 const db = require('../../plugins/mysql');
+const connection = db();
 const TABLE = require('../../utils/TABLE');
 
 const catStoreCatCd = {
@@ -13,7 +14,6 @@ const catStoreCatCd = {
                                 WHERE MAIN_CAT_ID = CAT_CD.MAIN_CAT_ID
                             ) AS MAIN_CAT_CD 
                             FROM ${TABLE.COL_STORE_CAT_CD} CAT_CD`;
-        const connection = await db
         const [row] = await connection.execute(sql);
         return row;
     },
@@ -27,7 +27,6 @@ const catStoreCatCd = {
         ON cat_cd.main_cat_id = main_cat_cd.main_cat_id
         WHERE cat_cd.cat_id = ?`
         const values = [catId]
-        const connection = await db;
         const [[row]] = await connection.execute(sql, values)
         return row
     },

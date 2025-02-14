@@ -1,17 +1,20 @@
 const db = require('../../plugins/mysql');
+const connection = db();
 const TABLE = require('../../utils/TABLE');
 const sqlHelper = require("../../utils/sqlHelper")
 const catStoreCatCd = require('./col_store_cat_cd')
 
 const colStore = {
 
-    async addStoreCollection(colStoreData) {
+    async addStoreCollection(colStoreData, transactionConn = null) {
+        // 트랜잭션 사용
         if(colStoreData.col_store_loc_post_cd == ""){
             colStoreData.col_store_loc_post_cd = 0;
         }
+        let conn = transactionConn ? transactionConn : connection;
         const sql = sqlHelper.Insert(TABLE.COL_STORE, colStoreData);
-        const connection = await db
-        const [row] = await connection.execute(sql.query, sql.values);
+
+        const [row] = await conn.execute(sql.query, sql.values);
         return row;
     },
 
@@ -21,7 +24,6 @@ const colStore = {
 
     async getStores(){
         const sql = sqlHelper.SelectSimple(TABLE.COL_STORE, null, [], {REG_DATE: false});
-        const connection = await db
         
         let [row] = await connection.execute(sql.query);
         row = await catStoreCatCd.attachCategoryData(row);
@@ -30,7 +32,6 @@ const colStore = {
 
     async getStore(storeId){
         const sql = sqlHelper.SelectSimple(TABLE.COL_STORE, {col_store_id: storeId})
-        const connection = await db
 
         let [row] = await connection.execute(sql.query, sql.values);
         row = await catStoreCatCd.attachCategoryData(row);
@@ -48,7 +49,6 @@ const colStore = {
                    ORDER BY distance ASC
                    LIMIT 30`
           
-        const connection = await db
         let [row] = await connection.execute(sql, [longitude, latitude, longitude, latitude, searchRedius])
         row = await catStoreCatCd.attachCategoryData(row);
         return row;
@@ -70,7 +70,6 @@ const colStore = {
            AND col_store_device_type = 'BLE'
          GROUP BY col_store_device_mac_addr
         `
-        const connection = await db
         let [row] = await connection.execute(query, ids)
 
         return {
@@ -79,9 +78,7 @@ const colStore = {
             }
     },
 
-
     async removeStore(col_store_id, isParent){
-        const connection = await db
         if(isParent){
             const sql = sqlHelper.DeleteSimple(TABLE.COL_STORE, {parent_store_id: col_store_id})
             await connection.execute(sql.query, sql.values)

@@ -1,5 +1,4 @@
 const express = require('express');
-const db = require('../plugins/mysql')
 const router = express.Router();
 const places = require('./_model/googleMapPlaces/places')
 
