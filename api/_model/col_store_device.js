@@ -216,13 +216,16 @@ const colStoreDevice = {
             // 해당 MAC 주소가 이 매장에 존재하는지 확인
             const matchedDevices = macGroups[col_store_device_mac_addr] || [];
 
-            const threshold = 15; // 허용 차이 dBm
 
             const filteredDevices = matchedDevices.filter(device => {
-              // Scandevice.col_store_device_rssi: 스캔 시의 기준 RSSI (사무실 기준)
               // device.col_store_device_rssi: 실제 기기에서 수집된 RSSI 값
-              const diff = Math.abs(Scandevice.col_store_device_rssi - device.col_store_device_rssi);
-              return diff <= threshold;
+              // device.col_store_device_min_rssi: 해당 기기에 설정된 최소 RSSI 값
+              // device.col_store_device_max_rssi: 해당 기기에 설정된 최대 RSSI 값
+              console.log('scanDevice  Rssi ', device.col_store_device_nm, ' : ', Scandevice.col_store_device_rssi,  " == ", "minRssi : ", device.col_store_device_min_rssi, " maxRssi : ", device.col_store_device_max_rssi)
+              return (
+                Scandevice.col_store_device_rssi >= device.col_store_device_min_rssi &&
+                Scandevice.col_store_device_rssi <= device.col_store_device_max_rssi
+              );
             });
 
             if (filteredDevices.length > 0) {
@@ -242,47 +245,14 @@ const colStoreDevice = {
        const matchRate = totalDevices > 0 ? (matchedDevices / totalDevices) * 100 : 0.0;
        let isMatched = false;
        let storeId = 0;
-       
-       switch (true) {
-         case (totalDevices >= 1 && totalDevices <= 3):
-           // 1~3개: 최소 1개 매칭
-           if (matchedDevices >= 1) {
-             isMatched = true;
-           }
-           break;
-       
-         case (totalDevices >= 4 && totalDevices <= 6):
-           // 4~6개: 최소 2개 매칭
-           if (matchedDevices >= 2) {
-             isMatched = true;
-           }
-           break;
-       
-         case (totalDevices >= 7 && totalDevices <= 10):
-           // 7~10개: 50% 매칭
-           if (matchRate >= 50) {
-             isMatched = true;
-           }
-           break;
-       
-         case (totalDevices >= 11 && totalDevices <= 14):
-           // 11~14개: 70% 매칭
-           if (matchRate >= 70) {
-             isMatched = true;
-           }
-           break;
-       
-         case (totalDevices >= 15):
-           // 15개 이상: 80% 매칭
-           if (matchRate >= 80) {
-             isMatched = true;
-           }
-           break;
-       
-         default:
-           // totalDevices가 0인 경우 등, 별도 처리할 수 있음
-           isMatched = false;
+
+       if(totalDevices >= 1 && totalDevices <= 3){
+            // 1~3개: 최소 1개 매칭
+            isMatched = matchedDevices >= 1 
+       } else {
+            isMatched = matchRate >= 60;
        }
+    
        
        if (isMatched) {
          storeId = matchResults[0]?.storeId || 0;

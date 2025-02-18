@@ -22,6 +22,7 @@ router.post('/make_visitor', async (req, res) => {
     };
 
     try {
+      console.log('--------------------------------------------');
        //console.log("ROWS SIZE : ", rows.length, " == devices.size ", devices.length )
 
       // //1.1 모바일에서 스캔한 데이터와 등록 된 기기 데이터를 비교처리
@@ -52,6 +53,7 @@ router.post('/make_visitor', async (req, res) => {
       console.error('Query Execution Error:', error);
     }
     console.log('responseData : ', responseData);
+    console.log('--------------------------------------------');
     res.json(responseData);
 })
 
