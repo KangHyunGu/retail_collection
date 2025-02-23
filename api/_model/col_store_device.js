@@ -199,73 +199,65 @@ const colStoreDevice = {
         return groupedData;
     },
 
-    // 매칭 로직
-    detectStoreEntry(ScanDatas, rows){
-       // 1. 매장 데이터 그룹화 (상위 매장 및 MAC 주소 기준)
-       const groupedData = this.groupByParentStoreAndMac(rows);
-
-       // 2. 매칭 결과 저장
-       const matchResults = [];
-
-       for(const Scandevice of ScanDatas){
-        const {col_store_device_mac_addr} = Scandevice;
-        let isMatched = false;
-
-        //상위 매장 순회
-        for(const [storeId, macGroups] of Object.entries(groupedData)){
-            // 해당 MAC 주소가 이 매장에 존재하는지 확인
+    detectStoreEntry(ScanDatas, rows) {
+        const groupedData = this.groupByParentStoreAndMac(rows);
+        const storeMatchCounts = {};
+        const matchResults = [];
+      
+        // 모든 스캔 기기에 대해 각 매장의 매칭 여부 검사
+        for (const Scandevice of ScanDatas) {
+          const { col_store_device_mac_addr } = Scandevice;
+          for (const [storeId, macGroups] of Object.entries(groupedData)) {
             const matchedDevices = macGroups[col_store_device_mac_addr] || [];
-
-
             const filteredDevices = matchedDevices.filter(device => {
-              // device.col_store_device_rssi: 실제 기기에서 수집된 RSSI 값
-              // device.col_store_device_min_rssi: 해당 기기에 설정된 최소 RSSI 값
-              // device.col_store_device_max_rssi: 해당 기기에 설정된 최대 RSSI 값
-              console.log('scanDevice  Rssi ', device.col_store_device_nm, ' : ', Scandevice.col_store_device_rssi,  " == ", "minRssi : ", device.col_store_device_min_rssi, " maxRssi : ", device.col_store_device_max_rssi)
               return (
                 Scandevice.col_store_device_rssi >= device.col_store_device_min_rssi &&
                 Scandevice.col_store_device_rssi <= device.col_store_device_max_rssi
               );
             });
-
+      
             if (filteredDevices.length > 0) {
-                isMatched = true;
-                matchResults.push({ storeId, Scandevice });
-                break; // 한 매장과 매칭되면 다른 매장은 검사하지 않음
+              matchResults.push({ storeId, Scandevice });
+              storeMatchCounts[storeId] = (storeMatchCounts[storeId] || 0) + 1;
             }
-
-            if (!isMatched) {
-                console.log(`No match found for device:`, Scandevice);
-            }
-        }         
-       }
-
-       const totalDevices = ScanDatas.length;
-       const matchedDevices = matchResults.length;
-       const matchRate = totalDevices > 0 ? (matchedDevices / totalDevices) * 100 : 0.0;
-       let isMatched = false;
-       let storeId = 0;
-
-       if(totalDevices >= 1 && totalDevices <= 2){
-            // 1~3개: 최소 1개 매칭
-            isMatched = matchedDevices >= 1 
-       } else {
-            isMatched = matchRate >= 60;
-       }
-    
-       
-       if (isMatched) {
-         storeId = matchResults[0]?.storeId || 0;
-         console.log(`User is inside the store: ${storeId}`);
-       }
-       
-       return {
-         isMatched,
-         storeId,
-         matchRate,
-         matchResults
-       };
-    },
+          }
+        }
+      
+        const totalDevices = ScanDatas.length;
+        const storeMatchRates = {};
+      
+        // 각 매장의 매칭률 계산
+        for (const [storeId, count] of Object.entries(storeMatchCounts)) {
+          storeMatchRates[storeId] = totalDevices > 0 ? (count / totalDevices) * 100 : 0;
+        }
+      
+        // 가장 높은 매칭률을 보이는 매장 선택
+        let bestStoreId = 0;
+        let bestMatchRate = 0;
+        for (const [storeId, rate] of Object.entries(storeMatchRates)) {
+          if (rate > bestMatchRate) {
+            bestMatchRate = rate;
+            bestStoreId = parseInt(storeId, 10);
+          }
+        }
+      
+        // 최종 매칭 여부 판정: 매칭률이 60% 미만이면 매칭된 매장이 없는 것으로 처리
+        const isMatched = bestMatchRate >= 60;
+      
+        if (isMatched) {
+          console.log(`User is inside the store: ${bestStoreId} with match rate ${bestMatchRate.toFixed(2)}%`);
+        } else {
+          console.log(`No store is matched. Highest match rate: ${bestMatchRate.toFixed(2)}%`);
+        }
+      
+        return {
+          isMatched,
+          storeId: isMatched ? bestStoreId : 0,
+          matchRate: bestMatchRate,
+          matchResults,
+          storeMatchRates
+        };
+      }
 
     // processScanData(scanDatas, rows){
     //     const groupedStores = groupByStore(rows); // 매장 그룹화
