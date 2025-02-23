@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const vcCustomer = require('./_model/vc/vc_customer');
+const vcVisitor = require('./_model/vc/vc_visitor');
 const colStoreDevice = require('./_model/col_store_device')
 const colStore = require('./_model/col_store');
 const places = require('./_model/googleMapPlaces/places');
@@ -13,12 +14,16 @@ router.post('/make_visitor', async (req, res) => {
    //console.log('datas : ', datas);
     const wifiScanDatas = datas.wifiScanDatas
     const bleScanDatas = datas.bleScanDatas
+    let visitorId = datas.visitorId
+    const useDeviceId = datas.vcCustomer.use_device_id;
+
     const devices = [...new Set([...wifiScanDatas, ...bleScanDatas])]
     const rows = await colStoreDevice.getMatchData(devices)
     //console.log('row : ', rows);
     const responseData = {
       visitStoreId: 0,
       visitStoreName: "",
+      visitorId : 0
     };
 
     try {
@@ -48,7 +53,6 @@ router.post('/make_visitor', async (req, res) => {
         // 기준 : Wifi 데이터에 매칭여부
         detectStoreEntry = colStoreDevice.detectStoreEntry(wifiScanDatas, rows);
         storeId = parseInt(detectStoreEntry.storeId)
-        console.log('WIFI : ', detectStoreEntry)
         if(storeId != 0){
           const col_store = await colStore.getStore(storeId);
           responseData["visitStoreId"] = col_store[0].col_store_id || 0;
@@ -62,12 +66,27 @@ router.post('/make_visitor', async (req, res) => {
           console.log('WIFI : ', detectStoreEntry)
         }
       }
+
+      if(storeId != 0){
+        if(visitorId == 0){
+          const visitorRow = await vcVisitor.createVisitorRecord(useDeviceId, storeId);
+          visitorId = visitorRow.insertId
+        } else {
+          await vcVisitor.updateVisitorLastMatchedTime(visitorId);
+        }
+        responseData["visitorId"] = visitorId;
+      } else {
+        responseData["visitorId"] = 0;
+      } 
+      
     } catch (error) {
       console.error('Query Execution Error:', error);
     }
     responseData["matchResultsWifi"] = responseData["matchResultsWifi"] || [];
     console.log("matched WIFI : ", responseData["matchResultsWifi"]);
+    
     console.log('--------------------------------------------');
+    
     res.json(responseData);
 })
 
