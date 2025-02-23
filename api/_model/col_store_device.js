@@ -246,7 +246,7 @@ const colStoreDevice = {
        let isMatched = false;
        let storeId = 0;
 
-       if(totalDevices >= 1 && totalDevices <= 3){
+       if(totalDevices >= 1 && totalDevices <= 2){
             // 1~3개: 최소 1개 매칭
             isMatched = matchedDevices >= 1 
        } else {
@@ -262,7 +262,8 @@ const colStoreDevice = {
        return {
          isMatched,
          storeId,
-         matchRate
+         matchRate,
+         matchResults
        };
     },
 

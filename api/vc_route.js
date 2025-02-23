@@ -35,6 +35,12 @@ router.post('/make_visitor', async (req, res) => {
         const col_store = await colStore.getStore(storeId);
         responseData["visitStoreId"] = col_store[0].col_store_id || 0;
         responseData["visitStoreName"] = col_store[0].col_store_nm || "";
+        responseData["matchResultsBle"] = [];
+        
+        for(device of detectStoreEntry.matchResults){
+          responseData["matchResultsBle"].push(device.Scandevice)
+        }
+        
         console.log('BLE : ', detectStoreEntry)
       } else {
         // BLE에서 매칭 실패했을경우
@@ -47,12 +53,20 @@ router.post('/make_visitor', async (req, res) => {
           const col_store = await colStore.getStore(storeId);
           responseData["visitStoreId"] = col_store[0].col_store_id || 0;
           responseData["visitStoreName"] = col_store[0].col_store_nm || "";
+          responseData["matchResultsWifi"] = [];
+
+          for(device of detectStoreEntry.matchResults){
+            responseData["matchResultsWifi"].push(device.Scandevice)
+          }
+
+          console.log('WIFI : ', detectStoreEntry)
         }
       }
     } catch (error) {
       console.error('Query Execution Error:', error);
     }
-    console.log('responseData : ', responseData);
+    responseData["matchResultsWifi"] = responseData["matchResultsWifi"] || [];
+    console.log("matched WIFI : ", responseData["matchResultsWifi"]);
     console.log('--------------------------------------------');
     res.json(responseData);
 })
