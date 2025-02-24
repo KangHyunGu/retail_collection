@@ -69,7 +69,7 @@ router.post('/make_visitor', async (req, res) => {
 
       if(storeId != 0){
         if(visitorId == 0){
-          const visitorRow = await vcVisitor.createVisitorRecord(useDeviceId, storeId);
+          const visitorRow = await vcVisitor.createVisitorRecord(useDeviceId, storeId, responseData["visitStoreName"]);
           visitorId = visitorRow.insertId
         } else {
           await vcVisitor.updateVisitorLastMatchedTime(visitorId);

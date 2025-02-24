@@ -6,7 +6,11 @@ moment.locale('ko');
 moment.updateLocale('ko', {
     longDateFormat : {
         L : 'YYYY-MM-DD',
+        Y : 'YYYY',
+        M: 'MM',
+        D: 'DD',
         LT : 'YYYY-MM-DD HH:mm:ss',
+        LTS  : 'HH:mm:ss',
         CREATE_KEY: 'YYYYMMDDHHmmss'
     }
 });

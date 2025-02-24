@@ -6,15 +6,13 @@ const colStoreCatCd = require('./_model/col_store_cat_cd')
 const colStore = require('./_model/col_store');
 const colStoreDevice = require('./_model/col_store_device')
 const colStoreDeviceUwb = require('./_model/col_store_device_uwb');
-const monent = require('../utils/moment');
+const moment = require('../utils/moment');
 const TABLE = require('../utils/TABLE');
 
-// router.get('/test', async(req, res) => {
-//     const sql = "SELECT * FROM test";
-    
-//     const [row] = await db.execute(sql);
-//     res.json(row);
-// })
+router.get('/test', async(req, res) => {
+   
+    res.json({time: moment().format("LT"), date: moment().format("L"), year: moment().format("Y"), time: moment().format("LTS")});
+})
 
 router.get('/spread', async(req, res) => {
     const store = req.query.store || "";
@@ -104,7 +102,7 @@ router.post("/add_data_collection", async (req, res) => {
         target_store_id = storeResults.insertId;
        } else {
         colStoreData["CHG_ID"] = 1;
-        colStoreData["CHG_DATE"] = monent().format("LT");
+        colStoreData["CHG_DATE"] = moment().format("LT");
         delete colStoreData.REG_ID;
         delete colStoreData.REG_DATE;
        }
