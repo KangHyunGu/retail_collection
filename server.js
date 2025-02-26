@@ -56,7 +56,10 @@ const cors = require('cors');
         res.sendFile(path.join(__dirname, 'googleMap.html'))
     })
 
+    // BI-SOLUTION 페이지 이동
     app.get('/bi-solution', (req, res) => {
-        res.redirect(302, process.env.BI_SOLUTION)
+        const serverDomain = process.env.SERVER_DOMAIN
+        const bi_soultion_port = process.env.BI_SOLUTION_PORT
+        res.redirect(302, `${serverDomain}:${bi_soultion_port}`)
     })
 })();
