@@ -32,6 +32,7 @@ const cors = require('cors');
     // router places
     app.use('/api/places/', require('./api/places_route'));
 
+
     webServer.listen(port, () => {
         console.log(`${port} 서버시작`);
     })
@@ -55,4 +56,7 @@ const cors = require('cors');
         res.sendFile(path.join(__dirname, 'googleMap.html'))
     })
 
+    app.get('/bi-solution', (req, res) => {
+        res.redirect(302, process.env.BI_SOLUTION)
+    })
 })();
