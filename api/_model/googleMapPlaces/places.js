@@ -66,8 +66,9 @@ const places = {
         }
 
         const sql = sqlHelper.InsertArray(TABLE.PLACES, datas);
+        //const formattedQuery = await connection.format(sql.query, sql.values);
+        //console.log('formattedQuery : ', formattedQuery);
         const [row] = await connection.execute(sql.query, sql.values);
-
 
         // 데이터 입력 후 places_region_id 연결 처리
         const updateQuery = `

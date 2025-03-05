@@ -18,11 +18,11 @@
 <body>
     <h1>Google Places API Search</h1>
     <div id="controls">
-        <!-- <input type="text" id="keyword" placeholder="Enter keyword"> -->
+         <input type="text" id="keyword" placeholder="Enter keyword">
     
        <span>반경조정</span> <input type="number" id="radius" placeholder="Radius (meters)" value="500" min="1" max="10000">
        <span>검색종류</span> <select id="searchType">
-          <!-- <option value="text">Text Search</option>  -->
+           <option value="text">Text Search</option> 
           <option value="nearby" selected>Nearby Search</option>
         </select>
         <span>매장검색타입</span> <select id="placeType">
@@ -31,7 +31,7 @@
             <option value="convenience_store">편의점</option>
             <option value="department_store">백화점</option>
             <option value="shopping_mall">대형몰</option>
-            <option value="grocery_or_supermarket">대형마트</option>
+            <option value="supermarket">대형마트</option>
         </select>
         <button id="searchButton">검색</button>
         <button id="clear">초기화</button>
@@ -147,7 +147,7 @@
                 <img src="https://img.icons8.com/fluency/50/shopping-mall.png" alt="대형몰">
                 대형몰
             </button>
-            <button class="filter-btn" data-type="grocery_or_supermarket">
+            <button class="filter-btn" data-type="supermarket">
                 <img src="https://img.icons8.com/color/50/grocery-store.png" alt="대형마트">
                 대형마트
             </button>

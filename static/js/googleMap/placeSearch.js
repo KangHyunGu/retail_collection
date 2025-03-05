@@ -38,8 +38,8 @@ function renderResults(results){
                 formatted_address: place.formatted_address || place.vicinity,
                 icon_url: place.icon,
                 icon_background_color: place.icon_background_color,
-                plus_code_compound: place.plus_code?.compound_code,
-                plus_code_global: place.plus_code?.global_code,
+                plus_code_compound: place.plus_code?.compound_code || '',
+                plus_code_global: place.plus_code?.global_code || '',
                 geometry_lat: place.geometry.location.lat(),
                 geometry_lng: place.geometry.location.lng(),
                 attributions_url:
@@ -84,7 +84,7 @@ function renderResults(results){
         // 리스트 클릭 시 마커 강조
         $(`.result-item[data-index="${index}"]`).on('click', () => {
             map.setCenter(marker.getPosition());
-            map.setZoom(15);
+            map.setZoom(22);
             highlightListItem(index);
         });
 
@@ -182,7 +182,7 @@ function performSearch({ searchType = "text", query = "", radius = 500, location
         if (status === google.maps.places.PlacesServiceStatus.OK) {
             const placeIds = results.map(place => place.place_id);
             const collectedPlaceIds = await checkCollectedPlaces(placeIds);
-            
+    
              // 수집 여부 추가
             const resultsWithCollectedFlag = results.map(place => ({
                 ...place,
@@ -201,7 +201,6 @@ function performSearch({ searchType = "text", query = "", radius = 500, location
             alert(`검색 실패: ${status}`);
         }
     };
-
     // 검색 유형에 따라 API 호출
     if (searchType === "text") {
         service.textSearch({ query }, processResults);

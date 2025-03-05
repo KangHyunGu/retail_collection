@@ -52,7 +52,7 @@ const types =
         "convenience_store" : {icon: "https://img.icons8.com/emoji/50/convenience-store.png"},
         "department_store"  : {icon: "https://img.icons8.com/emoji/50/department-store.png"},
         "shopping_mall"     : {icon: "https://img.icons8.com/fluency/50/shopping-mall.png"},
-        "grocery_or_supermarket" : {icon: "https://img.icons8.com/color/50/grocery-store.png"}
+        "supermarket" : {icon: "https://img.icons8.com/color/50/grocery-store.png"}
     }
 
     
