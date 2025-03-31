@@ -331,6 +331,21 @@ h1 {
   overflow-y: auto;
 }
 
+/* 검색 버튼 스타일 (원하는대로 수정) */
+#right-sidebar #search-current-region-btn {
+  display: block;
+  width: 100%;
+  padding: 8px 0;
+  margin-bottom: 10px;
+  background: #007bff;
+  color: white;
+  cursor: pointer;
+}
+
+#right-sidebar #search-current-region-btn:disabled {
+  background: #aaa;
+}
+
 /* 데이터 목록 스타일 */
 #right-sidebar ul {
   list-style: none;

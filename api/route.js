@@ -123,7 +123,7 @@ router.post("/add_data_collection", async (req, res) => {
         }
         //TODO: 업데이트 처리
         const devicesResult = await colStoreDevice.updateStoreDeviceCollection(updateData);
-        console.log('devicesResult : ', devicesResult);
+        //console.log('devicesResult : ', devicesResult);
        }
 
        // 트랜잭션 커밋
@@ -132,7 +132,7 @@ router.post("/add_data_collection", async (req, res) => {
         if (connection) {
             // 오류가 발생하면 롤백
             await connection.rollback();
-            console.log(err);
+            //console.log(err);
             console.error('Transaction rolled back due to error:', err.message);
         }
 

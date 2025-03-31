@@ -33,7 +33,7 @@ function updateFavoriteList() {
         // 즐겨찾기 항목 클릭 시 해당 위치로 이동
         item.click(() => {
             map.setCenter({ lat, lng });
-            map.setZoom(20);
+            map.setZoom(18);
         });
 
         

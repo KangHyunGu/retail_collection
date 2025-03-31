@@ -1,86 +1,85 @@
-function updatePlacesCollectionList() {
+function updatePlacesCollectionList(type = "all", page = 1) {
     // 1. 기존 마커 제거
     collectionMarkers.forEach(marker => marker.setMap(null));
     collectionMarkers = [];
-
-    const totalItems = placesGetTotalCount;
-    const itemsPerPage = 50
-    const totalPages = Math.ceil(totalItems / itemsPerPage)
+    
+    // 먼저 필터링을 수행합니다.
+    if(currentType != type || !filteredPlacesCache.length){
+        filteredPlacesCache = type === 'all' ? collectionPlaces : collectionPlaces.filter((place) => {
+            return place.type === type
+        });    
+    }
+    
+    const totalItems = filteredPlacesCache.length;
+    const itemsPerPage = 300;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    console.log(`${currentPlaceListPage} / ${totalPages}`);
 
     const $dataList = $('#data-list');
+    console.log($dataList);
     $dataList.empty();
-
-    if(currentPlaceListPage > totalPages || currentPlaceListPage < 1){
+    console.log('currentPlaceListPage : ', currentPlaceListPage);
+    if (currentPlaceListPage > totalPages || currentPlaceListPage < 1) {
         return [];
     }
 
-    const startIndex = (currentPlaceListPage - 1) * itemsPerPage
-    let endIndex = Math.min(startIndex + itemsPerPage, collectionPlaces.length);
-    
-    // 추가 조건: 데이터가 한 페이지에 다 들어올 경우
-    if (collectionPlaces.length <= itemsPerPage) {
-        endIndex = collectionPlaces.length;
-    }
+    const startIndex = (currentPlaceListPage - 1) * itemsPerPage;
+    let endIndex = Math.min(startIndex + itemsPerPage, totalItems);
 
-    for(let idx = startIndex; idx < endIndex; idx++){
-        const place_name = collectionPlaces[idx].place_name;
-        const formatted_address = collectionPlaces[idx].formatted_address;
-        const type_name = collectionPlaces[idx].type_name;
-        const lat = collectionPlaces[idx].geometry_lat;
-        const lng = collectionPlaces[idx].geometry_lng;
+    //console.log('startIndex:', startIndex, 'endIndex:', endIndex);
+    //console.log('filteredPlaces:', filteredPlacesCache);
+
+    // filteredPlaces 배열에 대해 루프를 돌립니다.
+    for (let idx = startIndex; idx < endIndex; idx++) {
+        const { place_name, formatted_address, type_name, geometry_lat, geometry_lng, type } = filteredPlacesCache[idx];
 
         const listItem = $(`
             <li>
-               <span><strong>${place_name}</strong><br>${formatted_address}</span>
-               
+                <span><strong>${place_name}</strong><br>${formatted_address}</span>
                 <span style="display: flex; align-items: center;">
-                        <span class="type-label">${type_name}</span>
-                        <span class="info-icon" title="상세 정보"></span>
-                 </span>
+                    <span class="type-label">${type_name}</span>
+                    <span class="info-icon" title="상세 정보"></span>
+                </span>
             </li>
-        `)
+        `);
 
         $dataList.append(listItem);
-       
-        listItem.click(() => {    
-            map.setCenter({lat, lng});
-            map.setZoom(20);
-        })
+
+        listItem.click(() => {
+            map.setCenter({ lat: geometry_lat, lng: geometry_lng });
+            map.setZoom(18);
+        });
 
         const markerOptions = {
-            position: {lat, lng},
+            position: { lat: geometry_lat, lng: geometry_lng },
             map: map,
-            icon: types[collectionPlaces[idx].type].icon
-        }
+            icon: types[type].icon
+        };
 
         const marker = createMarker(markerOptions);
         collectionMarkers.push(marker);
     }
-}
 
-function updatePagination(page = 1) {
     currentPage = page;
-    totalPages = Math.max(1, Math.ceil(placesGetTotalCount / placesGetLimit)); // 최소 1페이지 보장
 
     const $pagination = $("#pagination");
     $pagination.empty();
 
+
     // 이전 버튼
     if (currentPage > 1) {
         $pagination.append(`
-            <button class="pagination-button" onclick="fetchCollectionPlaces(currentRegion.id, 'all', ${currentPage - 1})">이전</button>
+            <button class="pagination-button" onclick="updatePlacesListEvent('${type}', ${currentPage - 1})">이전</button>
         `);
     }
 
-    // 페이지 번호
+    // 페이지 번호 (현재 페이지를 중심으로 앞뒤 2페이지)
     for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) {
         if (i === currentPage) {
-            $pagination.append(`
-                <button class="pagination-button active">${i}</button>
-            `);
+            $pagination.append(`<button class="pagination-button active">${i}</button>`);
         } else {
             $pagination.append(`
-                <button class="pagination-button" onclick="fetchCollectionPlaces(currentRegion.id, '${currentType}', ${i})">${i}</button>
+                <button class="pagination-button" onclick="updatePlacesListEvent('${type}', ${i})">${i}</button>
             `);
         }
     }
@@ -88,35 +87,77 @@ function updatePagination(page = 1) {
     // 다음 버튼
     if (currentPage < totalPages) {
         $pagination.append(`
-            <button class="pagination-button" onclick="fetchCollectionPlaces(currentRegion.id, 'all', ${currentPage + 1})">다음</button>
+            <button class="pagination-button" onclick="updatePlacesListEvent('${type}', ${currentPage + 1})">다음</button>
         `);
     }
 }
+
+function updatePagination(type = "all", page = 1) {
+    currentPage = page;
+
+    // pages 계산시 필터링된 배열의 길이를 사용하려면, 먼저 필터링
+    const filteredPlaces = type === 'all' ? collectionPlaces : collectionPlaces.filter(place => place.type === type);
+    const placesGetLimit = 300;  // itemsPerPage와 동일
+    
+    const totalPages = Math.max(1, Math.ceil(filteredPlaces.length / placesGetLimit));
+   
+    const $pagination = $("#pagination");
+    $pagination.empty();
+
+    // 이전 버튼
+    if (currentPage > 1) {
+        $pagination.append(`
+            <button class="pagination-button" onclick="updatePlacesListEvent('${type}', ${currentPage - 1})">이전</button>
+        `);
+    }
+
+    // 페이지 번호 (현재 페이지를 중심으로 앞뒤 2페이지)
+    for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) {
+        if (i === currentPage) {
+            $pagination.append(`<button class="pagination-button active">${i}</button>`);
+        } else {
+            $pagination.append(`
+                <button class="pagination-button" onclick="updatePlacesListEvent('${type}', ${i})">${i}</button>
+            `);
+        }
+    }
+
+    // 다음 버튼
+    if (currentPage < totalPages) {
+        $pagination.append(`
+            <button class="pagination-button" onclick="updatePlacesListEvent('${type}', ${currentPage + 1})">다음</button>
+        `);
+    }
+}
+
+function updatePlacesListEvent(type, page) {
+    currentPage = page;
+    currentPlaceListPage = page;  // 두 변수를 함께 업데이트
+    updatePlacesCollectionList(type, page);
+    //updatePagination(type, page);
+}
+
 
 // Select Box 초기화(지역)
 async function initializeRegionSelect() {
     const $regionSelect = $("#regionSelect");
     
     // 지역 데이터 가져오기
-    const data = await fetchRegions();
-    if(data.success){
-        // Select Box 옵션 추가
-        data.regions.forEach(region => {
-            const options = `<option value=${region.id}>${region.region_name}</option>`
-            $regionSelect.append(options);
+    const data = await fetchLoadPreFecTure();
+    
+    // Select Box 옵션 추가
+    data.forEach(prefecture => {
+        const options = `<option value=${prefecture.id}>${prefecture.name}</option>`
+        $regionSelect.append(options);
+        // region 데이터 삽입
+        preFecTureDatas.push(prefecture);
+    })
 
-            // region 데이터 삽입
-            places_region.push(region);
-        })
-
-        // 첫 번째 항목 자동 선택
-        if (data.regions.length > 0) {
-            const firstRegionId = data.regions[0].id;
-            $regionSelect.val(firstRegionId); // 첫 번째 항목 선택
-            $regionSelect.trigger("change"); // 이벤트 트리거
-        }
-    } else {
-        console.error('지역 데이터 가져오기 실패 : ', data.message);
+    // 첫 번째 항목 자동 선택
+    if (data.length > 0) {
+        const firstRegionId = data[0].id;
+        $regionSelect.val(firstRegionId); // 첫 번째 항목 선택
+        $regionSelect.trigger("change"); // 이벤트 트리거
     }
 }
 

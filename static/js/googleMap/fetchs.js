@@ -130,36 +130,90 @@ async function fetchRegions() {
 
 // 수집 된 지도 목록
 async function fetchCollectionPlaces(
-    places_region_id = null,
     type = "all",
     page = 1,
-    limit = 50) {
+    limit = 50,
+    city_id = 0
+) {
+
+    const $active = $("#filter-buttons").find(".filter-btn.active");
+    if($active.length){
+        $active.removeClass('active');
+    }
+
+    const currentPosition = currentMapMarker.getPosition()
+    const current_lat = currentPosition.lat();
+    const current_lng = currentPosition.lng();
+    const radius = (circle.radius / 1000.0);
+
+     let API_URL = '{1}'
+     API_URL += `current_lat=${current_lat}`;
+     API_URL += `&current_lng=${current_lng}`;
+     API_URL += `&radius=${radius}`;
+     API_URL += `&page=${page}`;
+     API_URL += `&limit=${limit}`;
+     API_URL += `&city_id=${city_id}`;
     try {
-        // 첫 페이지 요청 시, 총 데이터 개수 확인
-        if(page == 1 && placesGetTotalCount == 0){
-            console.log('places_region_id : ', places_region_id);
-            const countData = await apiRequest(`/api/places/getTotalCount?places_region_id=${places_region_id}&type=${type}`, 'GET');
-            if(countData.success){
-                placesGetTotalCount = countData.total;
-            }
-        }
+        //TODO: 첫 페이지 요청 시, 총 데이터 개수 확인
+        // if(page == 1 && placesGetTotalCount == 0){
+        //     API_URL = API_URL.replaceAll('{1}', '/api/places/getTotalCount?');
+        //     const countData = await apiRequest(API_URL, 'GET');
+        //     if(countData.success){
+        //         placesGetTotalCount = countData.total;
+        //     }
+        // }
 
-        console.log(`총 데이터 개수: ${placesGetTotalCount}, 검색 필터: ${type}, 페이지: ${page}`);
+        //TODO:
+        //console.log(`총 데이터 개수: ${placesGetTotalCount}, 검색 필터: ${type}, 페이지: ${page}`);
 
-        let apiUrl = `/api/places/getPlaces?places_region_id=${places_region_id}&page=${page}&limit=${limit}`
+        //let apiUrl = `/api/places/getPlaces?places_region_id=${places_region_id}&page=${page}&limit=${limit}`
+        API_URL = API_URL.replaceAll('{1}', '/api/places/getPlaces?');
         if(type != "all"){
-            apiUrl += `&type=${type}`;
+            API_URL += `&type=${type}`;
         }
 
         // 데이터 가져오기
-        const data = await apiRequest(apiUrl, 'GET');
+      
+        const data = await apiRequest(API_URL, 'GET');
         if (data.success) {
-            console.log('data.places : ', data.places);
             // 새로운 데이터를 기존 데이터에 추가
             collectionPlaces = data.places;
+            filteredPlacesCache = [];
             // 데이터 목록 업데이트
-            updatePlacesCollectionList();
-            updatePagination(page);
+            updatePlacesListEvent(type, page);
+
+             // 선택 된 마커 제거
+            if(currentMapMarker != null){
+                currentMapMarker.setMap(null);
+                currentMapMarker = null;
+            }   
+
+            // circle 제거
+            if(circle != null){
+                circle.setMap(null);
+                circle = null;
+            }
+
+            $("#search-current-region-btn").attr('disabled', true);
+
+            //updatePagination(type, page);
+            
+
+            // TODO: 히트맵 데이터 처리
+            // const heatmapData = []
+            // console.log('collectionPlaces : ', collectionPlaces);
+            // for(const place of collectionPlaces){
+            //     heatmapData.push(new google.maps.LatLng(place.geometry_lat, place.geometry_lng));
+            // }
+        
+            // const heatmap = new google.maps.visualization.HeatmapLayer({
+            //     data: heatmapData,
+            //     dissipating: true,  // true: 줌 레벨에 따라 점이 퍼짐
+            //     radius: 20,         // 점 반경
+            //     map: map,
+            //   });
+        
+            //   console.log(heatmap);
         }
     } catch (error) {
         console.error(error);
@@ -188,5 +242,30 @@ async function checkCollectedPlaces(placeIds) {
     } catch(error) {
         console.error('수집된 데이터 확인 중 오류 발생 : ', error.message);
         return [];
+    }
+}
+
+// City 데이터
+async function fetchLoadCityData(north, south, east, west, center_lat, center_lng, zoom){
+    try{
+        const data = await apiRequest(`/api/places/getCity?offset_north_lat=${north}&offset_south_lat=${south}&offset_east_lng=${east}&offset_west_lng=${west}&center_lat=${center_lat}&center_lng=${center_lng}&zoom=${zoom}`, 'GET');
+        if(data.success){
+            return data.citys;
+        }
+    } catch(error){
+        console.log('error : ', error);
+        console.error('도시 데이터 로드 중 오류 발생 : '. error.message);
+    }
+    return [];
+}
+
+async function fetchLoadPreFecTure(){
+    try{
+        const data = await apiRequest('/api/places/getPreFecTure', 'GET');
+        if(data.success){
+            return data.prefectures;
+        }
+    } catch(error){
+        console.error('메인 경계 데이터 로드 중 오류 발생 : ', error.message);
     }
 }

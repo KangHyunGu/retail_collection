@@ -14,6 +14,8 @@ let isSearch = false;
 
 // 현재는 페이지별로 불러온 데이터만 저장됨
 let collectionPlaces = [];
+// collectionPlaces에서 타입에 맞게 필터링 처리
+let filteredPlacesCache = [];
 // { regionId: [전체 데이터] } 형태로 지역별 데이터를 캐싱
 let placesCache = {}; 
 
@@ -22,13 +24,33 @@ let placesGetLimit = 50;
 let placesTotalPages = 1;
 let placesGetTotalCount = 0;
 
-let places_region = [];
-let currentRegion = {};
+let places_region = []; // places_region 데이터
+let preFecTureDatas = [];   // 행정경계(도,도,부,현 단위 또는 도경계)
+let cityDatas = [];     // city데이터
+
+let currentRegion = {}; // 현재 선택한 지역 region
+let RegionPolygons = []; // Zoom Level에 따른 전체 region
+let cityRegionPolygons = [] //Zoom Level에 따른 전체 region(시 데이터 저장)
+
 let currentRegionRectangle = null; // 현재 지역 경계를 저장할 변수
+let currentRegionPolygon = null;
 
 let currentType = 'all';
 
 let places_vc_logs = [];
+
+let heatMapData = []; // 히드맵을 활용하기 위한 변수
+let heatMap = null;
+
+let isCitySelect = false;
+
+let caching_center_lat = null;
+let caching_center_lng = null;
+let caching_north_lat = null;
+let caching_south_lat = null;
+let caching_east_lng = null;
+let caching_west_lng = null;
+
 
 // icon 관련 사이트
 // https://icons8.com

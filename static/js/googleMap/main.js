@@ -59,7 +59,7 @@ $(document).ready(() => {
         if (!isNaN(lat) && !isNaN(lng)) {
             const location = { lat, lng };
             map.setCenter(location);
-            map.setZoom(20);
+            map.setZoom(18);
 
             new google.maps.Marker({
                 position: location,
@@ -115,6 +115,7 @@ $(document).ready(() => {
 
         // 결과 marker 제거
         clearMarkers();
+        $('#search-current-region-btn').attr('disabled', true);
     })
 
     // Select(지역) 변경 시 이벤트 처리
@@ -124,9 +125,22 @@ $(document).ready(() => {
         placesGetTotalCount = 0;
 
         const selectedRegionId = $('#regionSelect').val(); // 선택된 지역 ID
-        currentRegion = places_region.find((item) => item.id == selectedRegionId);
-        
-        drawRegionBounds(currentRegion);
+        const oldRegion = currentRegion;
+        if (currentRegionPolygon) {
+            currentRegionPolygon.setMap(null);
+        }
+        //console.log('selectedRegionId : ', selectedRegionId);
+        currentRegion = preFecTureDatas.find((item) => item.id == selectedRegionId);
+        //console.log('currentRegion : ', currentRegion);
+        currentRegionPolygon = drawPreFecTureCircle(currentRegion, true);
+
+        // if(oldRegion != currentRegion){
+        //     // 기존에 그려둔 폴리곤 제거
+        //     if (currentRegionPolygon) {
+        //         currentRegionPolygon.setMap(null);
+        //     }
+            
+        // } 
 
         if(currentMapMarker){
             currentMapMarker.setMap(null);
@@ -139,7 +153,8 @@ $(document).ready(() => {
         // 기존 활성화된 필터 버튼 해제
         $("#filter-buttons .filter-btn").removeClass("active");
 
-        fetchCollectionPlaces(selectedRegionId, "all", 1, 50);
+        $("#data-list").empty();
+        //fetchCollectionPlaces(selectedRegionId, "all", 1, 300);
     });
 
     // 타입(약국,편의점,백화점 그 외..) 버튼 클릭시 이벤트 처리
@@ -147,19 +162,24 @@ $(document).ready(() => {
         event.stopPropagation(); // 빈 영역 클릭 이벤트 방지
         const $this = $(this);
         const selectedType = $this.data("type");
-        collectionPlaces = [];
-        placesGetTotalCount = 0;
+        //collectionPlaces = [];
+        //placesGetTotalCount = 0;
+
         if ($this.hasClass("active")) {
             // 이미 활성화된 버튼을 다시 클릭하면 해제
             $this.removeClass("active");
+             // 전체 장소 데이터 GET
+            updatePlacesListEvent('all', 1);
             currentType = "all";
-            fetchCollectionPlaces(currentRegion.id, "all", 1, 50); // 전체 데이터 다시 불러오기
         } else {
             // 다른 버튼이 클릭된 경우
             $(".filter-btn").removeClass("active");
             $this.addClass("active");
+           
+            //fetchCollectionPlaces(currentRegion.id, selectedType, 1, 300);
+            // type 해당되는 장소 데이터 GET
+            updatePlacesListEvent(selectedType, 1);
             currentType = selectedType;
-            fetchCollectionPlaces(currentRegion.id, selectedType, 1, 50);
         }
     });
 
@@ -167,6 +187,13 @@ $(document).ready(() => {
     $("#vcLogs").change(() => {
         const areaName = $("#vcLogs").val();
         fetchPlaceLogs(areaName);
+    })
+
+    $("#search-current-region-btn").on('click', function(){
+        loadCollectionPlaces();
+
+        //const {lat, lng} = currentMapMarker
+       
     })
 });
 
@@ -184,10 +211,10 @@ function initsettings() {
     .then((data) => {
         if(data.success){
             //2. 서버에서 API 키를 정상적으로 가져온다면 head URL Google Map 라이브러리 스크립트 cdn 생성
-            $.getScript(`https://maps.googleapis.com/maps/api/js?key=${data.apiKey}&libraries=places`)
-            .done(() => {
-                // const geocoder = new google.maps.Geocoder();
-                // geocoder.geocode({ address: '일본 효고현 히메지시' }, (results, status) => {
+            $.getScript(`https://maps.googleapis.com/maps/api/js?key=${data.apiKey}&libraries=places,visualization,geometry`)
+            .done(async () => {
+                 const geocoder = new google.maps.Geocoder();
+                // geocoder.geocode({ address: '일본 하마마쓰시' }, (results, status) => {
                 //     if (status === "OK") {
                 //         const bounds = results[0].geometry.bounds;
                 //         console.log(bounds);
@@ -217,13 +244,43 @@ function initsettings() {
                 //         console.error("Geocoding 실패:", status);
                 //     }
                 // });
+
+                // 임시 테스트 -------------------------------------------
+                
+                //const Data = await apiRequest(`/api/places/getNullGlobalCode`, 'GET');
+                // for(let i=0; i <= 20; i++){
+                //     const data = Data.datas[i];
+                //     const geom_lat = data.geometry_lat;
+                //     const geom_lng = data.geometry_lng;
+                //     const place_id = data.place_id;
+                //     const latlng = new google.maps.LatLng(geom_lat, geom_lng);
+                //     geocoder.geocode({location: latlng}, (results, status) => {
+                //         console.log('results : ', results);
+                //         if(status === "OK"){
+                //             const findObj = results.find((res) => res.place_id == place_id);
+                //             console.log(findObj);
+                //         }
+                //     })
+                // }
+
+                // const latlng = new google.maps.LatLng(35.8668904, 139.7529099)
+                // geocoder.geocode({location: latlng}, (results, status) => {
+                   
+                //     if(status === "OK"){
+                //         console.log('results : ', results);
+                //         const findObj = Data.datas.find((res) => res.place_id == )
+                //     }
+                // })
+
+                // ------------------------------------------------------
+
                 // 3. 지도 초기화
                 initMap(); 
                 // 4.사이드 조정
                 adjustSidebarHeight();
                 // 5. 검색바 조정
                 isTypeEnabled();
-                // 6. 지역 초기화
+                // 6. 지역 초기화(임시)
                 initializeRegionSelect();
                 // 7. 수집된 데이타 목록 가져옴
                 //fetchCollectionPlaces();
@@ -245,8 +302,8 @@ function adjustSidebarHeight() {
     const $streetViewControl = $('.gm-svpc');
     const $fullscreenControl = $('.gm-control-active.gm-fullscreen-control');
 
-    console.log('Street View Button:', $streetViewControl);
-    console.log('Fullscreen Button:', $fullscreenControl);
+    //console.log('Street View Button:', $streetViewControl);
+    //console.log('Fullscreen Button:', $fullscreenControl);
 
     if ($streetViewControl.length && $fullscreenControl.length) {
         // 버튼 위치 계산
@@ -281,6 +338,21 @@ function adjustSidebarHeight() {
             bottom: '200px',
             height: 'auto'
         })
+    }
+}
+
+function displayRightSideControl(isShow){
+    
+    if(isShow){
+        $('#search-current-region-btn').show();
+        $('#data-list').show();
+        $('#pagination').show();
+        $('#filter-buttons').show();
+    } else {
+        $('#search-current-region-btn').hide();
+        $('#data-list').hide();
+        $('#pagination').hide();
+        $('#filter-buttons').hide();
     }
 }
 

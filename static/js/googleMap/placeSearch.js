@@ -19,32 +19,33 @@ function renderResults(results){
         alert("검색 결과가 없습니다.");
         return;
     }
-
     // 수집 미완료된 데이터 맨 위로 정렬
     const sortedResults = sortPlacesByUncollectedStatus(results);
 
     let allCollected = true; // 모든 항목이 수집 완료인지 확인
     isSearch = true;
     sortedResults.forEach((result, index) => {
-        const place = result;
+        const place = result.Eg;
+        place.is_collected = result.is_collected;
+
         const markerOptions = {
-            position: place.geometry.location,
+            position: place.location,
             map,
-            title: place.name,
+            title: place.displayName,
             customData: {
-                place_name: place.name,
-                place_id: place.place_id,
-                business_status: place.business_status,
-                formatted_address: place.formatted_address || place.vicinity,
-                icon_url: place.icon,
+                place_name: place.displayName,
+                place_id: place.id,
+                business_status: place.businessStatus,
+                formatted_address: place.formattedAddress,
+                icon_url: place.svgIconMaskURI,
                 icon_background_color: place.icon_background_color,
                 plus_code_compound: place.plus_code?.compound_code || '',
                 plus_code_global: place.plus_code?.global_code || '',
-                geometry_lat: place.geometry.location.lat(),
-                geometry_lng: place.geometry.location.lng(),
+                geometry_lat: place.location.lat,
+                geometry_lng: place.location.lng,
                 attributions_url:
                     place.photos != null && place.photos.length
-                        ? place.photos[0].getUrl()
+                        ? place.photos[0]
                         : null,
                 is_collected : place.is_collected,
             },
@@ -52,7 +53,7 @@ function renderResults(results){
 
         // 수집 완료 상태 확인
         const statusHtml = place.is_collected
-        ? `<span class="collected-status">수집완료</span>` // 수집 완료
+        ? `<span class="collected-status"><b style="color:blue;">수집완료</b></span>` // 수집 완료
         : ""; // 수집되지 않은 항목은 아무 표시 없음
 
         if (!place.is_collected) {
@@ -69,8 +70,8 @@ function renderResults(results){
         // 리스트 항목
         const resultHtml = `
         <div class="result-item" data-index="${index}">
-            <strong>${place.name}</strong><br>
-            ${place.formatted_address || place.vicinity || "주소 없음"}<br>
+            <strong>${place.displayName}</strong><br>
+            ${place.formattedAddress || "주소 없음"}<br>
             ${statusHtml}
         </div>
         `;
@@ -84,19 +85,18 @@ function renderResults(results){
         // 리스트 클릭 시 마커 강조
         $(`.result-item[data-index="${index}"]`).on('click', () => {
             map.setCenter(marker.getPosition());
-            map.setZoom(22);
+            map.setZoom(20);
             highlightListItem(index);
         });
-
     });
 
     // 모든 항목이 수집 완료라면 수집 버튼 비활성화
     $("#dataColButton").prop('disabled', allCollected);
 
     // 첫 번째 결과 위치로 맵 이동
-    const firstResultLocation = results[0].geometry.location;
+    const firstResultLocation = results[0].location;
     map.setCenter(firstResultLocation);
-    map.setZoom(15); // 적절한 줌
+    map.setZoom(18); // 적절한 줌
 
     createPaginationControls();
 };
@@ -171,40 +171,90 @@ function updatePaginationButtons(){
     );
 };
 
-function performSearch({ searchType = "text", query = "", radius = 500, location = map.getCenter(), type = "" }) {
+async function performSearch({ searchType = "text", query = "", radius = 500, location = map.getCenter(), type = "" }) {
     currentSearchPage = 1;
     cachedResults = []; // 모든 검색 결과 캐싱
     paginationInstance = null; // pagination 인스턴스 저장
 
-    const service = new google.maps.places.PlacesService(map);
-    // Google Places API 콜백 처리
-    const processResults = async (results, status, pagination) => {
-        if (status === google.maps.places.PlacesServiceStatus.OK) {
-            const placeIds = results.map(place => place.place_id);
-            const collectedPlaceIds = await checkCollectedPlaces(placeIds);
+    const { Place, SearchNearbyRankPreference } = await google.maps.importLibrary("places");
     
-             // 수집 여부 추가
-            const resultsWithCollectedFlag = results.map(place => ({
-                ...place,
-                is_collected: collectedPlaceIds.includes(place.place_id),
-            }));
+    // 검색 요청 구성
+    const request = {
+        fields: ["id",
+                 "adrFormatAddress", 
+                 "attributions",
+                 "location", 
+                 "photos",
+                 "businessStatus", 
+                 "displayName",
+                 "formattedAddress",
+                 "plusCode",
+                 "googleMapsURI",
+                 "svgIconMaskURI",
+                 "iconBackgroundColor",
+                 "primaryType",
 
-            cachedResults = [...cachedResults, ...resultsWithCollectedFlag]; // 결과 캐싱
-            paginationInstance = pagination; // pagination 인스턴스 저장
-
-            const startIndex = (currentSearchPage - 1) * resultsPerPage;
-            const endIndex = Math.min(startIndex + resultsPerPage, cachedResults.length);
-
-            renderResults(cachedResults.slice(startIndex, endIndex)); // 현재 페이지 결과 렌더링
-            createPaginationControls();
-        } else {
-            alert(`검색 실패: ${status}`);
-        }
-    };
-    // 검색 유형에 따라 API 호출
-    if (searchType === "text") {
-        service.textSearch({ query }, processResults);
-    } else if (searchType === "nearby") {
-        service.nearbySearch({ location, radius, type }, processResults);
+        ],
+        locationRestriction: {
+            center: location,
+            radius
+        },
+        // optional parameters
+        includedPrimaryTypes: [type],
+        maxResultCount: 20,
+        rankPreference: SearchNearbyRankPreference.POPULARITY,
+        language: "ko",
+        region: "",
     }
+
+    const {places} = await Place.searchNearby(request);
+    //console.log('places.length : ', places.length);
+    if(places.length){
+        const placeIds = places.map(place => place.id);
+        const collectedPlaceIds = await checkCollectedPlaces(placeIds);
+        const resultsWithCollectedFlag = places.map(place => ({
+            ...place,
+            is_collected: collectedPlaceIds.includes(place.id),
+        }));
+
+        cachedResults = [...cachedResults, ...resultsWithCollectedFlag]; // 결과 캐싱
+        renderResults(resultsWithCollectedFlag);
+        //createPaginationControls();
+    
+    } else {
+        alert(`검색 실패: ${'ZERO RESULTS'}`);
+        return;
+    }
+
+    // const service = new google.maps.places.PlacesService(map);
+    // // Google Places API 콜백 처리
+    // const processResults = async (results, status, pagination) => {
+    //     if (status === google.maps.places.PlacesServiceStatus.OK) {
+    //         const placeIds = results.map(place => place.place_id);
+    //         const collectedPlaceIds = await checkCollectedPlaces(placeIds);
+    
+    //          // 수집 여부 추가
+    //         const resultsWithCollectedFlag = results.map(place => ({
+    //             ...place,
+    //             is_collected: collectedPlaceIds.includes(place.place_id),
+    //         }));
+
+    //         cachedResults = [...cachedResults, ...resultsWithCollectedFlag]; // 결과 캐싱
+    //         paginationInstance = pagination; // pagination 인스턴스 저장
+
+    //         const startIndex = (currentSearchPage - 1) * resultsPerPage;
+    //         const endIndex = Math.min(startIndex + resultsPerPage, cachedResults.length);
+
+    //         renderResults(cachedResults.slice(startIndex, endIndex)); // 현재 페이지 결과 렌더링
+    //         createPaginationControls();
+    //     } else {
+    //         alert(`검색 실패: ${status}`);
+    //     }
+    // };
+    // // 검색 유형에 따라 API 호출
+    // if (searchType === "text") {
+    //     service.textSearch({ query }, processResults);
+    // } else if (searchType === "nearby") {
+    //     service.nearbySearch({ location, radius, type }, processResults);
+    // }
 }
